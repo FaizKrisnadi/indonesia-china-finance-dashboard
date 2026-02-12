@@ -1,0 +1,141 @@
+{
+  "generated_at_utc": "2026-02-12T19:03:11.242159+00:00",
+  "raw_file_count": 9,
+  "row_count": 528,
+  "warning_count": 1,
+  "warnings": [
+    {
+      "source_file": "data/raw/China-Global-Investment-Tracker-2024-Fall-public.xlsx",
+      "warning_type": "missing_country_filter_columns",
+      "message": "No country/recipient/host column found; all rows excluded by Indonesia-only rule."
+    }
+  ],
+  "source_loads": [
+    {
+      "source_file": "data/raw/AidDatasGlobalChineseDevelopmentFinanceDataset_v3.0.xlsx",
+      "role": "primary",
+      "parser_used": "excel_fixed(sheet=GCDF_3.0,header=0)",
+      "rows_in_source": 20985,
+      "rows_loaded": 437,
+      "rows_excluded": 20548,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": 100.0,
+      "coordinate_missing_pct": 100.0,
+      "note": ""
+    },
+    {
+      "source_file": "data/raw/China-Global-Investment-Tracker-2024-Fall-public.xlsx",
+      "role": "primary",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 2329,
+      "rows_loaded": 0,
+      "rows_excluded": 2329,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": ""
+    },
+    {
+      "source_file": "data/raw/cgit_indonesia_investments_2006_2025.xlsx",
+      "role": "primary",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 94,
+      "rows_loaded": 94,
+      "rows_excluded": 0,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": 100.0,
+      "coordinate_missing_pct": 100.0,
+      "note": ""
+    },
+    {
+      "source_file": "data/raw/ChinaGlobalProjectDetails.xlsx",
+      "role": "enrichment",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 400,
+      "rows_loaded": 0,
+      "rows_excluded": 400,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": 100.0,
+      "coordinate_missing_pct": 100.0,
+      "note": "optional_enrichment_only"
+    },
+    {
+      "source_file": "data/raw/BI_FDI In Indonesia By Country Of Origin.xls",
+      "role": "excluded",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 78,
+      "rows_loaded": 0,
+      "rows_excluded": 78,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": "excluded_from_project_level"
+    },
+    {
+      "source_file": "data/raw/Geographical Spead [Spreadsheet].xlsx",
+      "role": "excluded",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 38,
+      "rows_loaded": 0,
+      "rows_excluded": 38,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": "excluded_from_project_level"
+    },
+    {
+      "source_file": "data/raw/IMF DIP.csv",
+      "role": "excluded",
+      "parser_used": "csv(header=0)",
+      "rows_in_source": 2,
+      "rows_loaded": 0,
+      "rows_excluded": 2,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": "excluded_from_project_level"
+    },
+    {
+      "source_file": "data/raw/bps_fdi_china_2015_2023.xlsx",
+      "role": "excluded",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 9,
+      "rows_loaded": 0,
+      "rows_excluded": 9,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": "excluded_from_project_level"
+    },
+    {
+      "source_file": "data/raw/bps_fdi_country_2000_2024_combined.xlsx",
+      "role": "excluded",
+      "parser_used": "excel_default(sheet=0,header=0)",
+      "rows_in_source": 825,
+      "rows_loaded": 0,
+      "rows_excluded": 825,
+      "rows_used_for_enrichment": 0,
+      "province_missing_pct": null,
+      "coordinate_missing_pct": null,
+      "note": "excluded_from_project_level"
+    }
+  ],
+  "missing_pct": {
+    "project_id": 0.0,
+    "project_name": 0.0,
+    "finance_type": 0.0,
+    "sector": 0.0,
+    "province": 100.0,
+    "district": 100.0,
+    "latitude": 82.77,
+    "longitude": 100.0,
+    "status": 17.23,
+    "approval_date": 17.23,
+    "construction_start_date": 62.88,
+    "financial_close_date": 100.0,
+    "operation_date": 58.33,
+    "committed_usd": 13.45,
+    "disbursed_usd": 30.68,
+    "year": 0.0
+  }
+}

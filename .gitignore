@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local virtual environments and env files
+.venv/
+venv/
+.env
+.env.*
+
+# Streamlit local config and credentials
+.streamlit/
+
+# Test and tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Jupyter and editor state
+.ipynb_checkpoints/
+.vscode/
+.idea/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
