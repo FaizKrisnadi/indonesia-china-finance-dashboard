@@ -422,6 +422,28 @@ def render_home_page() -> None:
             """
         )
 
+    with st.expander("📚 How to cite", expanded=False):
+        st.markdown(
+            """
+            If you use this dashboard in research, policy work, or presentations, please cite:
+
+            **Krisnadi, Muhammad Faiz. (2026). _Indonesia-China Finance Dashboard_.**
+            Retrieved from [investment.faizkrisnadi.com](https://investment.faizkrisnadi.com)
+            (accessed Month Day, Year).
+
+            **BibTeX**
+            ```bibtex
+            @misc{krisnadi2026indonesiachinafinance,
+              author = {Krisnadi, Muhammad Faiz},
+              title = {Indonesia-China Finance Dashboard},
+              year = {2026},
+              howpublished = {\\url{https://investment.faizkrisnadi.com}},
+              note = {Accessed: Month Day, Year}
+            }
+            ```
+            """
+        )
+
     st.divider()
     st.markdown("## Portfolio at a Glance")
 
