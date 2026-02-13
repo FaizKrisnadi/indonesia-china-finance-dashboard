@@ -451,6 +451,25 @@ def render_impact_and_friction_section(filtered: pd.DataFrame) -> None:
         st.info("Exposure comparison is unavailable because key fields are missing.")
         return
 
+    st.markdown("### Report Context")
+    st.caption(
+        "Neutral context adapted from: AidData et al. (June 2025), "
+        "'Balancing Risk and Reward: Who benefits from China's investments in Indonesia?'"
+    )
+    st.markdown(
+        "- The report describes average project delivery time from commitment to completion at about 2.5 years."
+    )
+    st.markdown(
+        "- It highlights that energy and transport projects tend to face longer delays and greater environmental/social risk exposure."
+    )
+    st.markdown(
+        "- It notes that a substantial share of the development finance portfolio used implementers with elevated ESG risk exposure or prior sanctions."
+    )
+    st.markdown(
+        "- It reports mixed outcome patterns across provinces, including higher productivity in areas with more Chinese FDI exposure and lower unemployment where development finance exposure is higher."
+    )
+    st.divider()
+
     st.subheader("Province Exposure vs Friction")
     scatter = px.scatter(
         comparison,
