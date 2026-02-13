@@ -84,6 +84,16 @@ CHART_SEQUENCE = [
 
 BASE_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 
+FDI_REGION_COORDS = {
+    "Sumatra": (-0.5, 101.0),
+    "Java": (-7.2, 110.4),
+    "Kalimantan": (0.3, 114.8),
+    "Sulawesi": (-1.4, 121.0),
+    "Papua": (-3.8, 136.6),
+    "Maluku": (-3.3, 129.0),
+    "Nusa Tenggara": (-8.7, 117.8),
+}
+
 
 def _inject_global_styles() -> None:
     if st.session_state.get("_dashboard_common_styles_injected"):
@@ -656,6 +666,10 @@ def render_locked_section_page(
                 "reason": "See where projects are concentrated geographically.",
             },
             {
+                "page": "Development Finance / Trends & Sectors",
+                "reason": "Track DF movement over time and sector concentration.",
+            },
+            {
                 "page": "Development Finance / Finance and Delivery",
                 "reason": "Track lifecycle stages and approval cohorts.",
             },
@@ -668,6 +682,10 @@ def render_locked_section_page(
             {
                 "page": "Development Finance / Impact and Friction",
                 "reason": "Compare exposure with risk outcomes.",
+            },
+            {
+                "page": "Development Finance / Trends & Sectors",
+                "reason": "View DF trends and sector mix in a dedicated page.",
             },
         ],
         "finance_delivery": [
@@ -694,6 +712,216 @@ def render_locked_section_page(
     render_navigation_suggestions(nav_map.get(page_key, []))
     render_footer_credit(compact=True)
     _render_metadata_expander(page_key, projects, locked_frame, quality_report)
+
+
+def _render_locked_df_page_header(
+    *,
+    page_title: str,
+    page_key: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+    _inject_global_styles()
+
+    research_questions = {
+        "trends": "How have Chinese development finance commitments evolved over time, and which sectors are most prominent?",
+    }
+
+    render_page_header(
+        title=page_title,
+        research_question=research_questions.get(page_key),
+        context="All values shown in this section are filtered to Development Finance (DF).",
+    )
+
+    projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)
+    if projects.empty:
+        st.warning("No processed dataset detected. Add source files to `data/raw`, then run `make etl`.")
+        return projects, pd.DataFrame(), quality_report
+
+    locked_frame = filter_by_locked_type(filtered, "DF")
+    return projects, locked_frame, quality_report
+
+
+def render_df_trends_and_sectors_page() -> None:
+    projects, locked_frame, quality_report = _render_locked_df_page_header(
+        page_title="Development Finance - Trends and Sectors",
+        page_key="trends",
+    )
+    if projects.empty:
+        _render_metadata_expander("trends_df", projects, locked_frame, quality_report)
+        return
+
+    if locked_frame.empty:
+        st.info("No DF records match the current sidebar filters.")
+        _render_metadata_expander("trends_df", projects, locked_frame, quality_report)
+        return
+
+    analysis = _prepare_fdi_analysis(locked_frame)
+
+    yearly = (
+        analysis.dropna(subset=["year_num"])
+        .groupby("year_num", as_index=False)[["committed_usd_num", "disbursed_usd_num"]]
+        .sum(min_count=1)
+        .sort_values("year_num")
+    )
+    yearly_count = (
+        analysis.dropna(subset=["year_num"])
+        .groupby("year_num", as_index=False)
+        .size()
+        .rename(columns={"size": "projects"})
+        .sort_values("year_num")
+    )
+
+    top_sector_committed = (
+        analysis.groupby("sector_clean", as_index=False)["committed_usd_num"]
+        .sum(min_count=1)
+        .dropna(subset=["committed_usd_num"])
+        .sort_values("committed_usd_num", ascending=False)
+        .head(15)
+    )
+
+    top_sector_count = (
+        analysis.groupby("sector_clean", dropna=False)
+        .size()
+        .reset_index(name="projects")
+        .sort_values("projects", ascending=False)
+        .head(15)
+    )
+
+    if not top_sector_committed.empty and len(top_sector_committed) >= 3:
+        total_committed = top_sector_committed["committed_usd_num"].sum(min_count=1)
+        top3_share = (
+            top_sector_committed.head(3)["committed_usd_num"].sum(min_count=1) / total_committed * 100
+            if total_committed
+            else 0
+        )
+        trend_note = f"Top three sectors account for {top3_share:.0f}% of DF commitments in this view."
+    else:
+        trend_note = "Use this page to compare DF sector concentration with year-by-year movement."
+    render_insight_box(trend_note, "key")
+
+    render_section_divider("Temporal Trends")
+    time_left, time_right = st.columns([2, 1])
+    with time_left:
+        if yearly.empty:
+            st.info("Year values are unavailable for temporal trend charts.")
+        else:
+            yearly_melted = yearly.melt(
+                id_vars="year_num",
+                value_vars=["committed_usd_num", "disbursed_usd_num"],
+                var_name="series",
+                value_name="usd",
+            )
+            yearly_melted["series"] = yearly_melted["series"].map(
+                {
+                    "committed_usd_num": "Committed",
+                    "disbursed_usd_num": "Disbursed",
+                }
+            )
+            time_fig = px.line(
+                yearly_melted,
+                x="year_num",
+                y="usd",
+                color="series",
+                markers=True,
+                labels={"year_num": "Year", "usd": "USD", "series": ""},
+                color_discrete_map={
+                    "Committed": COLORS["chart_primary"],
+                    "Disbursed": COLORS["chart_secondary"],
+                },
+            )
+            render_chart_with_insight(
+                time_fig,
+                title="Committed vs Disbursed Over Time",
+                insight="Tracks how DF commitments and disbursements shift over time.",
+                legend_horizontal=True,
+            )
+
+    with time_right:
+        if yearly_count.empty:
+            st.info("No year data available for project-count trend.")
+        else:
+            yearly_count["year_num"] = yearly_count["year_num"].astype(int)
+            volume_fig = px.bar(
+                yearly_count,
+                x="year_num",
+                y="projects",
+                labels={"year_num": "Year", "projects": "Projects"},
+                color_discrete_sequence=[COLORS["chart_tertiary"]],
+            )
+            render_chart_with_insight(
+                volume_fig,
+                title="Project Volume by Year",
+                insight="Shows annual project entry volume in DF data.",
+            )
+
+    render_section_divider("Sector Dynamics")
+    sector_left, sector_right = st.columns([1, 1])
+    with sector_left:
+        sector_count_fig = px.bar(
+            top_sector_count.sort_values("projects"),
+            x="projects",
+            y="sector_clean",
+            orientation="h",
+            labels={"projects": "Projects", "sector_clean": "Sector"},
+            color_discrete_sequence=[COLORS["chart_primary"]],
+        )
+        render_chart_with_insight(
+            sector_count_fig,
+            title="Top Sectors by Project Count",
+            insight="Highlights sectors with the highest project volume.",
+        )
+
+    with sector_right:
+        if top_sector_committed.empty:
+            st.info("Committed values are unavailable for sector ranking.")
+        else:
+            sector_committed_fig = px.bar(
+                top_sector_committed.sort_values("committed_usd_num"),
+                x="committed_usd_num",
+                y="sector_clean",
+                orientation="h",
+                labels={"committed_usd_num": "Committed USD", "sector_clean": "Sector"},
+                color_discrete_sequence=[COLORS["chart_secondary"]],
+            )
+            render_chart_with_insight(
+                sector_committed_fig,
+                title="Top Sectors by Committed Value",
+                insight="Compares DF sectors by commitment size.",
+            )
+
+    if not top_sector_committed.empty:
+        share_fig = px.pie(
+            top_sector_committed,
+            names="sector_clean",
+            values="committed_usd_num",
+            hole=0.45,
+            color_discrete_sequence=px.colors.qualitative.Set2,
+        )
+        share_fig.update_traces(textposition="inside", textinfo="percent+label")
+        render_chart_with_insight(
+            share_fig,
+            title="Sector Share of DF Commitments",
+            insight="Shows relative concentration across DF sectors.",
+        )
+
+    render_navigation_suggestions(
+        [
+            {
+                "page": "Development Finance / Overview",
+                "reason": "Return to portfolio baseline metrics.",
+            },
+            {
+                "page": "Development Finance / Spatial Explorer",
+                "reason": "See geographic concentration and regional breakdown.",
+            },
+            {
+                "page": "Development Finance / Finance and Delivery",
+                "reason": "Connect trend signals with delivery timelines.",
+            },
+        ]
+    )
+
+    render_footer_credit(compact=True)
+    _render_metadata_expander("trends_df", projects, locked_frame, quality_report)
 
 
 def _render_locked_fdi_page_header(
@@ -1440,19 +1668,47 @@ def render_fdi_region_distribution_page() -> None:
         insight="Compare absolute commitment size across Indonesian regional groupings.",
     )
 
-    pie_fig = px.pie(
-        plot_df,
-        names="region",
-        values="china_capex_2024usd_b",
-        color_discrete_sequence=px.colors.qualitative.Set2,
-    )
-    pie_fig.update_traces(textposition="inside", textinfo="percent+label")
+    map_df = plot_df.copy()
+    map_df["lat"] = map_df["region"].map(lambda value: FDI_REGION_COORDS.get(value, (None, None))[0])
+    map_df["lon"] = map_df["region"].map(lambda value: FDI_REGION_COORDS.get(value, (None, None))[1])
+    map_df = map_df.dropna(subset=["lat", "lon"])
 
-    render_chart_with_insight(
-        pie_fig,
-        title="Regional Share of Chinese FDI",
-        insight="Shows each region's contribution to total Chinese FDI CAPEX.",
-    )
+    if map_df.empty:
+        st.info("Map coordinates are unavailable for selected regions.")
+    else:
+        regional_map = px.scatter_geo(
+            map_df,
+            lat="lat",
+            lon="lon",
+            size="china_capex_2024usd_b",
+            color="region",
+            hover_name="region",
+            hover_data={
+                "china_capex_2024usd_b": ":.2f",
+                "all_source_capex_2024usd_b": ":.2f",
+                "lat": False,
+                "lon": False,
+            },
+            labels={
+                "china_capex_2024usd_b": "China CAPEX ($B)",
+                "all_source_capex_2024usd_b": "All-source CAPEX ($B)",
+            },
+            color_discrete_sequence=CHART_SEQUENCE,
+            projection="natural earth",
+        )
+        regional_map.update_geos(
+            fitbounds="locations",
+            visible=False,
+            showcountries=True,
+            countrycolor="rgba(0,0,0,0.25)",
+            lataxis_range=[-12, 8],
+            lonaxis_range=[94, 142],
+        )
+        render_chart_with_insight(
+            regional_map,
+            title="Interactive Map: Chinese FDI by Region",
+            insight="Bubble size reflects China CAPEX by region (constant 2024 USD, billions).",
+        )
 
     render_section_divider("Underlying Regional Table")
 

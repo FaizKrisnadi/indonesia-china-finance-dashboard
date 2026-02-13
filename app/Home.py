@@ -5,6 +5,7 @@ home_page = st.Page("nav_pages/home_page.py", title="Home", default=True)
 df_pages = [
     st.Page("nav_pages/df_overview.py", title="Overview"),
     st.Page("nav_pages/df_spatial_explorer.py", title="Spatial Explorer"),
+    st.Page("nav_pages/df_trends_and_sectors.py", title="Trends & Sectors"),
     st.Page("nav_pages/df_finance_and_delivery.py", title="Finance and Delivery"),
     st.Page("nav_pages/df_impact_and_friction.py", title="Impact and Friction"),
 ]

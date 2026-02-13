@@ -9,9 +9,9 @@ import pydeck as pdk
 import streamlit as st
 
 try:
-    from app.shared import format_currency, format_pct
+    from app.shared import format_currency, format_pct, load_projects_cached
 except ModuleNotFoundError:
-    from shared import format_currency, format_pct
+    from shared import format_currency, format_pct, load_projects_cached
 
 try:
     from src.metrics import (
@@ -42,6 +42,159 @@ except ModuleNotFoundError:
         status_mix,
         summarize_exposure_vs_friction,
     )
+
+
+DF_REPORT_PROJECTS = [
+    {"region": "Sumatra", "province_name": "Aceh", "project_value_2024_usd_b": 0.23, "project_count": 12, "per_capita_2024_usd": 42.20},
+    {"region": "Nusa Tenggara", "province_name": "Bali", "project_value_2024_usd_b": 0.60, "project_count": 7, "per_capita_2024_usd": 135.07},
+    {"region": "Sumatra", "province_name": "Bangka Belitung Islands", "project_value_2024_usd_b": 0.00, "project_count": 0, "per_capita_2024_usd": 0.00},
+    {"region": "Java", "province_name": "Banten", "project_value_2024_usd_b": 4.28, "project_count": 22, "per_capita_2024_usd": 344.05},
+    {"region": "Sumatra", "province_name": "Bengkulu", "project_value_2024_usd_b": 0.36, "project_count": 3, "per_capita_2024_usd": 168.86},
+    {"region": "Java", "province_name": "Central Java", "project_value_2024_usd_b": 5.56, "project_count": 12, "per_capita_2024_usd": 146.75},
+    {"region": "Kalimantan", "province_name": "Central Kalimantan", "project_value_2024_usd_b": 0.03, "project_count": 1, "per_capita_2024_usd": 11.01},
+    {"region": "Papua", "province_name": "Central Papua", "project_value_2024_usd_b": 0.00, "project_count": 2, "per_capita_2024_usd": None},
+    {"region": "Sulawesi", "province_name": "Central Sulawesi", "project_value_2024_usd_b": 5.76, "project_count": 15, "per_capita_2024_usd": 1844.92},
+    {"region": "Java", "province_name": "East Java", "project_value_2024_usd_b": 3.42, "project_count": 22, "per_capita_2024_usd": 81.90},
+    {"region": "Kalimantan", "province_name": "East Kalimantan", "project_value_2024_usd_b": 0.27, "project_count": 5, "per_capita_2024_usd": 66.51},
+    {"region": "Nusa Tenggara", "province_name": "East Nusa Tenggara", "project_value_2024_usd_b": 0.02, "project_count": 2, "per_capita_2024_usd": 4.28},
+    {"region": "Sulawesi", "province_name": "Gorontalo", "project_value_2024_usd_b": 0.00, "project_count": 1, "per_capita_2024_usd": 1.30},
+    {"region": "Papua", "province_name": "Highland Papua", "project_value_2024_usd_b": 0.00, "project_count": 0, "per_capita_2024_usd": None},
+    {"region": "Java", "province_name": "Jakarta Special Capital Region", "project_value_2024_usd_b": 3.53, "project_count": 21, "per_capita_2024_usd": 330.54},
+    {"region": "Sumatra", "province_name": "Jambi", "project_value_2024_usd_b": 0.00, "project_count": 1, "per_capita_2024_usd": 0.43},
+    {"region": "Sumatra", "province_name": "Lampung", "project_value_2024_usd_b": 0.03, "project_count": 2, "per_capita_2024_usd": 3.24},
+    {"region": "Maluku Islands", "province_name": "Maluku", "project_value_2024_usd_b": 0.02, "project_count": 1, "per_capita_2024_usd": 12.38},
+    {"region": "Kalimantan", "province_name": "North Kalimantan", "project_value_2024_usd_b": 0.02, "project_count": 1, "per_capita_2024_usd": 21.32},
+    {"region": "Maluku Islands", "province_name": "North Maluku", "project_value_2024_usd_b": 0.71, "project_count": 6, "per_capita_2024_usd": 523.21},
+    {"region": "Sulawesi", "province_name": "North Sulawesi", "project_value_2024_usd_b": 0.42, "project_count": 6, "per_capita_2024_usd": 155.90},
+    {"region": "Sumatra", "province_name": "North Sumatra", "project_value_2024_usd_b": 3.17, "project_count": 25, "per_capita_2024_usd": 203.56},
+    {"region": "Papua", "province_name": "Papua", "project_value_2024_usd_b": 0.02, "project_count": 2, "per_capita_2024_usd": 5.31},
+    {"region": "Sumatra", "province_name": "Riau", "project_value_2024_usd_b": 0.30, "project_count": 2, "per_capita_2024_usd": 44.36},
+    {"region": "Sumatra", "province_name": "Riau Islands", "project_value_2024_usd_b": 0.26, "project_count": 1, "per_capita_2024_usd": 117.18},
+    {"region": "Kalimantan", "province_name": "South Kalimantan", "project_value_2024_usd_b": 0.41, "project_count": 4, "per_capita_2024_usd": 94.78},
+    {"region": "Papua", "province_name": "South Papua", "project_value_2024_usd_b": 0.00, "project_count": 0, "per_capita_2024_usd": None},
+    {"region": "Sulawesi", "province_name": "South Sulawesi", "project_value_2024_usd_b": 0.58, "project_count": 5, "per_capita_2024_usd": 61.32},
+    {"region": "Sumatra", "province_name": "South Sumatra", "project_value_2024_usd_b": 7.04, "project_count": 9, "per_capita_2024_usd": 797.14},
+    {"region": "Sulawesi", "province_name": "Southeast Sulawesi", "project_value_2024_usd_b": 1.46, "project_count": 2, "per_capita_2024_usd": 521.81},
+    {"region": "Papua", "province_name": "Southwest Papua", "project_value_2024_usd_b": 0.00, "project_count": 0, "per_capita_2024_usd": None},
+    {"region": "Java", "province_name": "Special Region of Yogyakarta", "project_value_2024_usd_b": 0.01, "project_count": 5, "per_capita_2024_usd": 2.68},
+    {"region": "Java", "province_name": "West Java", "project_value_2024_usd_b": 6.58, "project_count": 24, "per_capita_2024_usd": 130.79},
+    {"region": "Kalimantan", "province_name": "West Kalimantan", "project_value_2024_usd_b": 0.53, "project_count": 6, "per_capita_2024_usd": 93.18},
+    {"region": "Nusa Tenggara", "province_name": "West Nusa Tenggara", "project_value_2024_usd_b": 0.06, "project_count": 3, "per_capita_2024_usd": 11.28},
+    {"region": "Papua", "province_name": "West Papua", "project_value_2024_usd_b": 3.69, "project_count": 5, "per_capita_2024_usd": 3063.52},
+    {"region": "Sulawesi", "province_name": "West Sulawesi", "project_value_2024_usd_b": 0.00, "project_count": 0, "per_capita_2024_usd": 0.00},
+    {"region": "Sumatra", "province_name": "West Sumatra", "project_value_2024_usd_b": 0.23, "project_count": 2, "per_capita_2024_usd": 39.97},
+]
+
+DF_PROVINCE_COORD_FALLBACK = {
+    "Aceh": (5.55, 95.32),
+    "Bali": (-8.65, 115.22),
+    "Bangka Belitung Islands": (-2.13, 106.11),
+    "Banten": (-6.12, 106.15),
+    "Bengkulu": (-3.79, 102.26),
+    "Central Java": (-6.99, 110.42),
+    "Central Kalimantan": (-2.21, 113.92),
+    "Central Papua": (-3.40, 135.50),
+    "Central Sulawesi": (-0.89, 119.87),
+    "East Java": (-7.25, 112.75),
+    "East Kalimantan": (-0.50, 117.15),
+    "East Nusa Tenggara": (-10.17, 123.61),
+    "Gorontalo": (0.54, 123.06),
+    "Highland Papua": (-4.10, 138.90),
+    "Jakarta Special Capital Region": (-6.20, 106.82),
+    "Jambi": (-1.61, 103.61),
+    "Lampung": (-5.43, 105.26),
+    "Maluku": (-3.69, 128.18),
+    "North Kalimantan": (2.84, 117.37),
+    "North Maluku": (0.78, 127.38),
+    "North Sulawesi": (1.47, 124.84),
+    "North Sumatra": (3.59, 98.67),
+    "Papua": (-2.54, 140.71),
+    "Riau": (0.53, 101.45),
+    "Riau Islands": (0.92, 104.45),
+    "South Kalimantan": (-3.31, 114.59),
+    "South Papua": (-8.50, 140.40),
+    "South Sulawesi": (-5.14, 119.41),
+    "South Sumatra": (-2.99, 104.76),
+    "Southeast Sulawesi": (-3.99, 122.52),
+    "Southwest Papua": (-0.86, 131.25),
+    "Special Region of Yogyakarta": (-7.80, 110.37),
+    "West Java": (-6.91, 107.61),
+    "West Kalimantan": (-0.03, 109.34),
+    "West Nusa Tenggara": (-8.58, 116.10),
+    "West Papua": (-0.86, 134.08),
+    "West Sulawesi": (-2.67, 118.89),
+    "West Sumatra": (-0.95, 100.35),
+}
+
+DF_REGION_COORD_FALLBACK = {
+    "Sumatra": (-0.6, 101.2),
+    "Java": (-7.3, 110.2),
+    "Kalimantan": (0.3, 114.8),
+    "Sulawesi": (-1.3, 121.1),
+    "Papua": (-3.9, 136.5),
+    "Maluku Islands": (-3.2, 129.1),
+    "Nusa Tenggara": (-8.7, 117.8),
+}
+
+DF_COORD_ALIAS = {
+    "jakarta special capital region": "dki jakarta",
+    "special region of yogyakarta": "di yogyakarta",
+    "bangka belitung islands": "bangka belitung",
+}
+
+
+def _normalize_text(value: str) -> str:
+    return str(value).strip().lower()
+
+
+def _build_province_coordinate_lookup() -> dict[str, tuple[float, float]]:
+    projects = load_projects_cached()
+    if projects.empty:
+        return {}
+    frame = projects.copy()
+    frame["latitude"] = pd.to_numeric(frame["latitude"], errors="coerce")
+    frame["longitude"] = pd.to_numeric(frame["longitude"], errors="coerce")
+    frame = frame.dropna(subset=["latitude", "longitude"])
+    if frame.empty:
+        return {}
+
+    frame["province_clean"] = (
+        frame["province"].astype("string").str.strip().str.lower().replace({"": pd.NA})
+    )
+    frame = frame.dropna(subset=["province_clean"])
+    centroids = (
+        frame.groupby("province_clean", as_index=False)[["latitude", "longitude"]]
+        .mean()
+        .rename(columns={"latitude": "lat", "longitude": "lon"})
+    )
+    return {
+        row["province_clean"]: (float(row["lat"]), float(row["lon"]))
+        for _, row in centroids.iterrows()
+    }
+
+
+def _build_df_report_map_frame() -> pd.DataFrame:
+    frame = pd.DataFrame(DF_REPORT_PROJECTS).copy()
+    lookup = _build_province_coordinate_lookup()
+
+    lat_values: list[float | None] = []
+    lon_values: list[float | None] = []
+    for _, row in frame.iterrows():
+        province_name = str(row["province_name"])
+        normalized = _normalize_text(province_name)
+        lookup_key = DF_COORD_ALIAS.get(normalized, normalized)
+        coords = lookup.get(lookup_key)
+        if coords is None:
+            coords = DF_PROVINCE_COORD_FALLBACK.get(province_name)
+        if coords is None:
+            coords = DF_REGION_COORD_FALLBACK.get(str(row["region"]))
+
+        lat_values.append(coords[0] if coords else None)
+        lon_values.append(coords[1] if coords else None)
+
+    frame["lat"] = lat_values
+    frame["lon"] = lon_values
+    return frame
 
 
 def render_overview_section(filtered: pd.DataFrame) -> None:
@@ -153,6 +306,98 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
     if filtered.empty:
         st.info("No records match the selected filters.")
         return
+
+    st.subheader("Chinese-funded Development Projects by Province (2000-2023)")
+    st.caption(
+        "Source: Behavioral Insight report table 'Official PRC Projects by Region' "
+        "(constant 2024 USD)."
+    )
+
+    report_frame = _build_df_report_map_frame()
+    show_zero_value = st.toggle(
+        "Include provinces with zero reported project value",
+        value=True,
+        key="df_spatial_include_zero_value",
+    )
+
+    map_frame_report = report_frame.copy()
+    if not show_zero_value:
+        map_frame_report = map_frame_report[map_frame_report["project_value_2024_usd_b"] > 0].copy()
+    map_frame_report = map_frame_report.dropna(subset=["lat", "lon"])
+
+    if map_frame_report.empty:
+        st.info("No report rows are available for mapping.")
+    else:
+        map_fig = px.scatter_geo(
+            map_frame_report,
+            lat="lat",
+            lon="lon",
+            size="project_value_2024_usd_b",
+            color="region",
+            hover_name="province_name",
+            hover_data={
+                "project_value_2024_usd_b": ":.2f",
+                "project_count": True,
+                "per_capita_2024_usd": ":,.2f",
+                "lat": False,
+                "lon": False,
+            },
+            labels={
+                "project_value_2024_usd_b": "Project value ($B)",
+                "project_count": "Project count",
+                "per_capita_2024_usd": "Per-capita USD (2024)",
+            },
+            color_discrete_sequence=px.colors.qualitative.Set2,
+            projection="natural earth",
+        )
+        map_fig.update_geos(
+            fitbounds="locations",
+            visible=False,
+            showcountries=True,
+            countrycolor="rgba(0,0,0,0.25)",
+            lataxis_range=[-12, 8],
+            lonaxis_range=[94, 142],
+        )
+        map_fig.update_layout(margin={"t": 30, "b": 30, "l": 20, "r": 20})
+        st.plotly_chart(map_fig, use_container_width=True)
+
+    region_summary = (
+        report_frame.groupby("region", as_index=False)
+        .agg(
+            project_value_2024_usd_b=("project_value_2024_usd_b", "sum"),
+            project_count=("project_count", "sum"),
+        )
+        .sort_values("project_value_2024_usd_b", ascending=False)
+    )
+    region_display = region_summary.rename(
+        columns={
+            "region": "Region",
+            "project_value_2024_usd_b": "Project Value ($B, 2024 USD)",
+            "project_count": "Project Count",
+        }
+    )
+
+    province_display = report_frame.rename(
+        columns={
+            "region": "Region",
+            "province_name": "Province",
+            "project_value_2024_usd_b": "Project Value ($B, 2024 USD)",
+            "project_count": "Project Count",
+            "per_capita_2024_usd": "Per Capita (USD, 2024)",
+        }
+    )
+    province_display["Per Capita (USD, 2024)"] = province_display["Per Capita (USD, 2024)"].apply(
+        lambda value: "Missing population data"
+        if pd.isna(value)
+        else f"{float(value):,.2f}"
+    )
+
+    st.markdown("**Regional Breakdown (Report Table)**")
+    st.dataframe(region_display, use_container_width=True, hide_index=True)
+    st.markdown("**Province Breakdown (Report Table)**")
+    st.dataframe(province_display, use_container_width=True, hide_index=True)
+
+    st.divider()
 
     analysis_frame = filtered.copy()
     analysis_frame["latitude"] = pd.to_numeric(analysis_frame["latitude"], errors="coerce")
