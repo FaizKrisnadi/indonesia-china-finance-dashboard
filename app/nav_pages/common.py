@@ -1179,59 +1179,56 @@ def render_fdi_trends_and_sectors_page() -> None:
 
     render_section_divider("Temporal Trends")
 
-    time_left, time_right = st.columns([2, 1])
-    with time_left:
-        if yearly.empty:
-            st.info("Year values are unavailable for temporal trend charts.")
-        else:
-            yearly_melted = yearly.melt(
-                id_vars="year_num",
-                value_vars=["committed_usd_num", "disbursed_usd_num"],
-                var_name="series",
-                value_name="usd",
-            )
-            yearly_melted["series"] = yearly_melted["series"].map(
-                {
-                    "committed_usd_num": "Committed",
-                    "disbursed_usd_num": "Disbursed",
-                }
-            )
-            time_fig = px.line(
-                yearly_melted,
-                x="year_num",
-                y="usd",
-                color="series",
-                markers=True,
-                labels={"year_num": "Year", "usd": "USD", "series": ""},
-                color_discrete_map={
-                    "Committed": COLORS["chart_primary"],
-                    "Disbursed": COLORS["chart_secondary"],
-                },
-            )
-            render_chart_with_insight(
-                time_fig,
-                title="Committed vs Disbursed Over Time",
-                insight="Compares pledge volume against realized flows by year.",
-                legend_horizontal=True,
-            )
+    if yearly.empty:
+        st.info("Year values are unavailable for temporal trend charts.")
+    else:
+        yearly_melted = yearly.melt(
+            id_vars="year_num",
+            value_vars=["committed_usd_num", "disbursed_usd_num"],
+            var_name="series",
+            value_name="usd",
+        )
+        yearly_melted["series"] = yearly_melted["series"].map(
+            {
+                "committed_usd_num": "Committed",
+                "disbursed_usd_num": "Disbursed",
+            }
+        )
+        time_fig = px.line(
+            yearly_melted,
+            x="year_num",
+            y="usd",
+            color="series",
+            markers=True,
+            labels={"year_num": "Year", "usd": "USD", "series": ""},
+            color_discrete_map={
+                "Committed": COLORS["chart_primary"],
+                "Disbursed": COLORS["chart_secondary"],
+            },
+        )
+        render_chart_with_insight(
+            time_fig,
+            title="Committed vs Disbursed Over Time",
+            insight="Compares pledge volume against realized flows by year.",
+            legend_horizontal=True,
+        )
 
-    with time_right:
-        if yearly_count.empty:
-            st.info("No year data available for project-count trend.")
-        else:
-            yearly_count["year_num"] = yearly_count["year_num"].astype(int)
-            volume_fig = px.bar(
-                yearly_count,
-                x="year_num",
-                y="projects",
-                labels={"year_num": "Year", "projects": "Projects"},
-                color_discrete_sequence=[COLORS["chart_tertiary"]],
-            )
-            render_chart_with_insight(
-                volume_fig,
-                title="Project Volume by Year",
-                insight="Tracks when new FDI entries are most active.",
-            )
+    if yearly_count.empty:
+        st.info("No year data available for project-count trend.")
+    else:
+        yearly_count["year_num"] = yearly_count["year_num"].astype(int)
+        volume_fig = px.bar(
+            yearly_count,
+            x="year_num",
+            y="projects",
+            labels={"year_num": "Year", "projects": "Projects"},
+            color_discrete_sequence=[COLORS["chart_tertiary"]],
+        )
+        render_chart_with_insight(
+            volume_fig,
+            title="Project Volume by Year",
+            insight="Tracks when new FDI entries are most active.",
+        )
 
     render_section_divider("Sector Dynamics")
 
