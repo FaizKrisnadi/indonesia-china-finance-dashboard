@@ -283,7 +283,7 @@ def render_footer_credit(*, compact: bool = False) -> None:
             "<div style='text-align:center; padding:"
             f"{padding}; color:#616161; font-size:0.9rem;'>"
             "Designed and maintained by "
-            "<a href='https://faiz.krisnadi.com' target='_blank' "
+            "<a href='https://faizkrisnadi.com' target='_blank' "
             "style='color:#2196F3; text-decoration:none; font-weight:600;'>"
             "Faiz Krisnadi"
             "</a>"
@@ -333,7 +333,7 @@ def render_home_page() -> None:
     st.title("Indonesia-China Finance Dashboard")
     st.markdown(
         """
-        Built by **[Faiz Krisnadi](https://faiz.krisnadi.com)**, this dashboard tracks China-origin
+        Built by **[Faiz Krisnadi](https://faizkrisnadi.com)**, this dashboard tracks China-origin
         Development Finance (DF) and Foreign Direct Investment (FDI) inflows into Indonesia, from
         commitment to delivery, with spatial exposure and implementation risk in one view.
         """
