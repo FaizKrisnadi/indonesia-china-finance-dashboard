@@ -473,89 +473,85 @@ def render_home_page() -> None:
     st.divider()
     st.markdown("### Portfolio Trends")
 
-    left_col, right_col = st.columns([2, 1])
+    trend_year = filtered["year"]
+    if trend_year.dropna().empty:
+        trend_year = pd.to_datetime(filtered["approval_date"], errors="coerce").dt.year
 
-    with left_col:
-        trend_year = filtered["year"]
-        if trend_year.dropna().empty:
-            trend_year = pd.to_datetime(filtered["approval_date"], errors="coerce").dt.year
+    trend = pd.DataFrame(
+        {
+            "year": pd.to_numeric(trend_year, errors="coerce"),
+            "committed_usd": pd.to_numeric(filtered["committed_usd"], errors="coerce"),
+            "disbursed_usd": pd.to_numeric(filtered["disbursed_usd"], errors="coerce"),
+        }
+    ).dropna(subset=["year"])
 
-        trend = pd.DataFrame(
-            {
-                "year": pd.to_numeric(trend_year, errors="coerce"),
-                "committed_usd": pd.to_numeric(filtered["committed_usd"], errors="coerce"),
-                "disbursed_usd": pd.to_numeric(filtered["disbursed_usd"], errors="coerce"),
-            }
-        ).dropna(subset=["year"])
+    if trend.empty:
+        st.info("Year values are unavailable for trend visualization.")
+    else:
+        yearly = (
+            trend.groupby("year", as_index=False)[["committed_usd", "disbursed_usd"]]
+            .sum(min_count=1)
+            .sort_values("year")
+        )
+        trend_long = yearly.melt(
+            id_vars="year",
+            value_vars=["committed_usd", "disbursed_usd"],
+            var_name="series",
+            value_name="usd",
+        )
+        trend_long["series"] = trend_long["series"].map(
+            {"committed_usd": "Committed", "disbursed_usd": "Disbursed"}
+        )
 
-        if trend.empty:
-            st.info("Year values are unavailable for trend visualization.")
-        else:
-            yearly = (
-                trend.groupby("year", as_index=False)[["committed_usd", "disbursed_usd"]]
-                .sum(min_count=1)
-                .sort_values("year")
-            )
-            trend_long = yearly.melt(
-                id_vars="year",
-                value_vars=["committed_usd", "disbursed_usd"],
-                var_name="series",
-                value_name="usd",
-            )
-            trend_long["series"] = trend_long["series"].map(
-                {"committed_usd": "Committed", "disbursed_usd": "Disbursed"}
-            )
+        trend_fig = px.line(
+            trend_long,
+            x="year",
+            y="usd",
+            color="series",
+            markers=True,
+            labels={"year": "Year", "usd": "Amount (USD)", "series": ""},
+            color_discrete_map={
+                "Committed": COLORS["chart_primary"],
+                "Disbursed": COLORS["chart_secondary"],
+            },
+        )
 
-            trend_fig = px.line(
-                trend_long,
-                x="year",
-                y="usd",
-                color="series",
-                markers=True,
-                labels={"year": "Year", "usd": "Amount (USD)", "series": ""},
-                color_discrete_map={
-                    "Committed": COLORS["chart_primary"],
-                    "Disbursed": COLORS["chart_secondary"],
-                },
-            )
+        trend_insight = "Track how commitments and disbursements move over time."
+        if len(yearly) >= 2:
+            prev_value = yearly.iloc[-2]["committed_usd"]
+            curr_value = yearly.iloc[-1]["committed_usd"]
+            if pd.notna(prev_value) and prev_value not in (0,):
+                change_pct = (curr_value - prev_value) / prev_value * 100
+                trend_insight = (
+                    f"Committed capital changed by {change_pct:+.0f}% from "
+                    f"{int(yearly.iloc[-2]['year'])} to {int(yearly.iloc[-1]['year'])}."
+                )
 
-            trend_insight = "Track how commitments and disbursements move over time."
-            if len(yearly) >= 2:
-                prev_value = yearly.iloc[-2]["committed_usd"]
-                curr_value = yearly.iloc[-1]["committed_usd"]
-                if pd.notna(prev_value) and prev_value not in (0,):
-                    change_pct = (curr_value - prev_value) / prev_value * 100
-                    trend_insight = (
-                        f"Committed capital changed by {change_pct:+.0f}% from "
-                        f"{int(yearly.iloc[-2]['year'])} to {int(yearly.iloc[-1]['year'])}."
-                    )
+        render_chart_with_insight(
+            trend_fig,
+            title="Capital Flow Trend",
+            insight=trend_insight,
+            methodology="Annual totals of committed and disbursed values within current filters.",
+            legend_horizontal=True,
+        )
 
-            render_chart_with_insight(
-                trend_fig,
-                title="Capital Flow Trend",
-                insight=trend_insight,
-                methodology="Annual totals of committed and disbursed values within current filters.",
-                legend_horizontal=True,
-            )
+    if concentration.empty:
+        st.info("Sector values are unavailable for this filter selection.")
+    else:
+        pie_fig = px.pie(
+            concentration,
+            names="sector",
+            values="value",
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Set2,
+        )
+        pie_fig.update_traces(textposition="inside", textinfo="percent")
 
-    with right_col:
-        if concentration.empty:
-            st.info("Sector values are unavailable for this filter selection.")
-        else:
-            pie_fig = px.pie(
-                concentration,
-                names="sector",
-                values="value",
-                hole=0.5,
-                color_discrete_sequence=px.colors.qualitative.Set2,
-            )
-            pie_fig.update_traces(textposition="inside", textinfo="percent")
-
-            render_chart_with_insight(
-                pie_fig,
-                title="Sector Concentration",
-                insight="Highlights which sectors capture the largest share of portfolio value.",
-            )
+        render_chart_with_insight(
+            pie_fig,
+            title="Sector Concentration",
+            insight="Highlights which sectors capture the largest share of portfolio value.",
+        )
 
     st.divider()
     st.markdown("### Explore by Type")
