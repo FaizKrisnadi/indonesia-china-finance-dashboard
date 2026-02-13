@@ -581,11 +581,6 @@ def render_global_sidebar_filters(
     row_count = int(len(projects))
     source_label = get_loaded_source_label()
 
-    st.info(
-        f"Data scope: DF + FDI projects in Indonesia | Rows: {row_count:,} | "
-        f"DF: {df_count:,} | FDI: {fdi_count:,} | Loaded source: {source_label}"
-    )
-
     if show_finance_type:
         if finance_types:
             selected_types_label = ", ".join(str(item).upper() for item in finance_types)
@@ -593,7 +588,13 @@ def render_global_sidebar_filters(
             selected_types_label = "None"
     else:
         selected_types_label = "Locked by top tabs (DF / FDI)"
-    st.caption(f"Active view: Finance Type = {selected_types_label}")
+
+    with st.sidebar.expander("Dataset Scope", expanded=False):
+        st.caption(
+            f"Data scope: DF + FDI projects in Indonesia | Rows: {row_count:,} | "
+            f"DF: {df_count:,} | FDI: {fdi_count:,} | Loaded source: {source_label}"
+        )
+        st.caption(f"Active view: Finance Type = {selected_types_label}")
 
     filters = {
         "year": years,
