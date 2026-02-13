@@ -243,48 +243,45 @@ def render_overview_section(filtered: pd.DataFrame) -> None:
         }
     ).dropna(subset=["year"])
 
-    left_col, right_col = st.columns((2, 1))
-    with left_col:
-        st.subheader("Committed vs Disbursed Trend")
-        if trend.empty:
-            st.info("Trend view unavailable because year values are missing.")
-        else:
-            yearly = (
-                trend.groupby("year", as_index=False)[["committed_usd", "disbursed_usd"]]
-                .sum(min_count=1)
-                .sort_values("year")
-            )
-            trend_long = yearly.melt(
-                id_vars="year",
-                value_vars=["committed_usd", "disbursed_usd"],
-                var_name="metric",
-                value_name="usd",
-            )
-            fig = px.area(
-                trend_long,
-                x="year",
-                y="usd",
-                color="metric",
-                labels={"year": "Year", "usd": "USD", "metric": "Series"},
-            )
-            fig.update_layout(legend_title_text="")
-            st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Committed vs Disbursed Trend")
+    if trend.empty:
+        st.info("Trend view unavailable because year values are missing.")
+    else:
+        yearly = (
+            trend.groupby("year", as_index=False)[["committed_usd", "disbursed_usd"]]
+            .sum(min_count=1)
+            .sort_values("year")
+        )
+        trend_long = yearly.melt(
+            id_vars="year",
+            value_vars=["committed_usd", "disbursed_usd"],
+            var_name="metric",
+            value_name="usd",
+        )
+        fig = px.area(
+            trend_long,
+            x="year",
+            y="usd",
+            color="metric",
+            labels={"year": "Year", "usd": "USD", "metric": "Series"},
+        )
+        fig.update_layout(legend_title_text="")
+        st.plotly_chart(fig, use_container_width=True)
 
-    with right_col:
-        st.subheader("Status Mix")
-        status_frame = status_mix(filtered)
-        if status_frame.empty:
-            st.info("Status values are missing.")
-        else:
-            status_fig = px.bar(
-                status_frame,
-                x="projects",
-                y="status",
-                orientation="h",
-                labels={"projects": "Projects", "status": "Status"},
-            )
-            status_fig.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(status_fig, use_container_width=True)
+    st.subheader("Status Mix")
+    status_frame = status_mix(filtered)
+    if status_frame.empty:
+        st.info("Status values are missing.")
+    else:
+        status_fig = px.bar(
+            status_frame,
+            x="projects",
+            y="status",
+            orientation="h",
+            labels={"projects": "Projects", "status": "Status"},
+        )
+        status_fig.update_layout(yaxis={"categoryorder": "total ascending"})
+        st.plotly_chart(status_fig, use_container_width=True)
 
     province_table = (
         filtered.groupby("province", as_index=False)
