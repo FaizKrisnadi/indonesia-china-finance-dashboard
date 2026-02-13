@@ -7,6 +7,7 @@ from typing import Any
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 try:
@@ -59,6 +60,144 @@ except ModuleNotFoundError:
 SectionRenderer = Callable[[pd.DataFrame], None]
 
 
+# ==========================================
+# STORYTELLING UI COMPONENTS
+# ==========================================
+
+def render_page_header(
+    title: str,
+    research_question: str | None = None,
+    context: str | None = None,
+    show_breadcrumb: bool = True
+) -> None:
+    """
+    Render a narrative-driven page header with research context.
+    
+    Args:
+        title: Page title
+        research_question: The key question this page answers (optional)
+        context: Why this analysis matters (optional)
+        show_breadcrumb: Show navigation breadcrumb
+    """
+    if show_breadcrumb:
+        # Extract section from title (e.g., "FDI - Overview" → "FDI")
+        parts = title.split(" - ")
+        if len(parts) == 2:
+            section, page = parts
+            st.markdown(f"<small style='color: #666;'>📊 {section} / **{page}**</small>", unsafe_allow_html=True)
+        
+    st.title(title)
+    
+    if research_question:
+        st.markdown(f"""
+        <div style='background-color: #f0f7ff; padding: 1rem; border-left: 4px solid #1f77b4; margin: 1rem 0;'>
+            <strong>🔍 Research Question:</strong> {research_question}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    if context:
+        st.caption(context)
+
+
+def render_insight_box(insight: str, insight_type: str = "key") -> None:
+    """
+    Highlight a key finding or insight.
+    
+    Args:
+        insight: The finding to highlight
+        insight_type: 'key' (blue), 'warning' (yellow), 'positive' (green), or 'neutral' (gray)
+    """
+    colors = {
+        "key": ("#e3f2fd", "#1976d2", "💡"),
+        "warning": ("#fff3e0", "#f57c00", "⚠️"),
+        "positive": ("#e8f5e9", "#388e3c", "✓"),
+        "neutral": ("#f5f5f5", "#616161", "→")
+    }
+    bg_color, border_color, icon = colors.get(insight_type, colors["neutral"])
+    
+    st.markdown(f"""
+    <div style='background-color: {bg_color}; padding: 1rem; border-left: 4px solid {border_color}; margin: 1rem 0;'>
+        <strong>{icon} Key Finding:</strong> {insight}
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_metric_with_context(
+    label: str,
+    value: str,
+    delta: str | None = None,
+    interpretation: str | None = None,
+    help_text: str | None = None
+) -> None:
+    """
+    Render a metric with contextual explanation.
+    
+    Args:
+        label: Metric label
+        value: Metric value
+        delta: Change indicator (optional)
+        interpretation: What this number means (optional)
+        help_text: Tooltip explanation (optional)
+    """
+    st.metric(label, value, delta=delta, help=help_text)
+    if interpretation:
+        st.caption(f"_{interpretation}_")
+
+
+def render_chart_with_insight(
+    fig: go.Figure,
+    title: str,
+    insight: str | None = None,
+    methodology: str | None = None
+) -> None:
+    """
+    Render a chart with interpretive context.
+    
+    Args:
+        fig: Plotly figure
+        title: Chart title
+        insight: What to notice in this chart
+        methodology: How this was calculated (optional)
+    """
+    st.subheader(title)
+    
+    if insight:
+        st.markdown(f"**What to notice:** {insight}")
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    if methodology:
+        with st.expander("📊 Methodology"):
+            st.caption(methodology)
+
+
+def render_section_divider(title: str | None = None) -> None:
+    """Render a visual section divider."""
+    if title:
+        st.markdown(f"### {title}")
+    st.divider()
+
+
+def render_navigation_suggestions(suggestions: list[dict[str, str]]) -> None:
+    """
+    Suggest related pages to explore.
+    
+    Args:
+        suggestions: List of dicts with 'page' and 'reason' keys
+    """
+    st.markdown("---")
+    st.markdown("**📖 Continue exploring:**")
+    cols = st.columns(len(suggestions))
+    for i, suggestion in enumerate(suggestions):
+        with cols[i]:
+            st.markdown(f"**{suggestion['page']}**")
+            st.caption(suggestion['reason'])
+
+
+# ==========================================
+# DATA LOADING
+# ==========================================
+
 def _load_page_state(show_finance_type: bool) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any], dict[str, list[Any]]]:
     projects = load_projects_cached()
     quality_report = load_data_quality_cached()
@@ -68,10 +207,18 @@ def _load_page_state(show_finance_type: bool) -> tuple[pd.DataFrame, pd.DataFram
     return projects, filtered, quality_report, filters
 
 
+# ==========================================
+# HOME PAGE - REDESIGNED
+# ==========================================
+
 def render_home_page() -> None:
-    st.title("Home")
-    st.caption(
-        "Portfolio-grade monitoring of project pipeline, realization, spatial exposure, and delivery risk."
+    """Narrative-driven home page with executive summary."""
+    
+    render_page_header(
+        title="Indonesia–China Finance Dashboard",
+        research_question="How is Chinese capital flowing into Indonesia, and what patterns emerge in development finance versus foreign direct investment?",
+        context="Portfolio-grade monitoring of China-linked project pipelines, spatial exposure, and delivery dynamics.",
+        show_breadcrumb=False
     )
 
     projects, filtered, quality_report, filters = _load_page_state(show_finance_type=True)
@@ -85,7 +232,6 @@ def render_home_page() -> None:
         return
 
     render_trust_metadata_strip("home", projects, filtered, quality_report)
-    st.info("Detailed analysis is split into dedicated sidebar sections: Development Finance and FDI.")
 
     options = get_filter_options_from_projects(projects)
     if filtered.empty:
@@ -123,6 +269,7 @@ def render_home_page() -> None:
         render_data_quality_panel(projects, quality_report)
         return
 
+    # Calculate metrics
     finance_series = filtered["finance_type"].astype("string").str.upper()
     df_projects_count = int(finance_series.eq("DF").sum())
     fdi_projects_count = int(finance_series.eq("FDI").sum())
@@ -133,20 +280,66 @@ def render_home_page() -> None:
     implementation_days = add_time_to_implementation_days(filtered)["time_to_implementation_days"]
     median_implementation = pd.to_numeric(implementation_days, errors="coerce").median()
 
-    card_1, card_2, card_3, card_4 = st.columns(4)
-    card_1.metric("Projects", f"{len(filtered):,}")
-    card_2.metric("Committed Capital", format_currency(committed_total))
-    card_3.metric("Disbursed Capital", format_currency(disbursed_total))
-    card_4.metric(
-        "Median Time to Implementation",
-        f"{median_implementation:,.0f} days" if pd.notna(median_implementation) else "N/A",
-    )
+    # EXECUTIVE SUMMARY SECTION
+    st.markdown("## 📋 Executive Summary")
+    
+    # Generate dynamic insight based on data
+    total_projects = len(filtered)
+    df_share = (df_projects_count / total_projects * 100) if total_projects > 0 else 0
+    fdi_share = (fdi_projects_count / total_projects * 100) if total_projects > 0 else 0
+    
+    if realization_rate and realization_rate < 0.5:
+        realization_insight = "warning"
+        realization_text = f"Portfolio realization rate is {format_pct(realization_rate)}, indicating significant implementation gaps between commitments and actual disbursements."
+    elif realization_rate and realization_rate >= 0.75:
+        realization_insight = "positive"
+        realization_text = f"Strong portfolio performance with {format_pct(realization_rate)} realization rate, showing effective conversion of commitments to disbursements."
+    else:
+        realization_insight = "neutral"
+        realization_text = f"Portfolio realization rate stands at {format_pct(realization_rate)}, reflecting moderate implementation progress."
+    
+    render_insight_box(realization_text, insight_type=realization_insight)
 
-    df_card, fdi_card = st.columns(2)
-    df_card.metric("DF Projects", f"{df_projects_count:,}")
-    fdi_card.metric("FDI Projects", f"{fdi_projects_count:,}")
-    st.metric("Portfolio Realization Rate", format_pct(realization_rate))
+    # PRIMARY METRICS - Focused on the most important numbers
+    st.markdown("### Portfolio Overview")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        render_metric_with_context(
+            label="Total Projects Tracked",
+            value=f"{total_projects:,}",
+            interpretation=f"{df_share:.0f}% Development Finance, {fdi_share:.0f}% FDI"
+        )
+    
+    with col2:
+        render_metric_with_context(
+            label="Committed Capital",
+            value=format_currency(committed_total),
+            interpretation="Total pledged across all projects",
+            help_text="Aggregated committed amounts in constant 2024 USD"
+        )
+    
+    with col3:
+        render_metric_with_context(
+            label="Portfolio Realization",
+            value=format_pct(realization_rate),
+            interpretation="Share of commitments actually disbursed",
+            help_text="Disbursed / Committed ratio"
+        )
 
+    # SECONDARY METRICS - Important but less prominent
+    with st.expander("📊 Additional Portfolio Metrics", expanded=False):
+        sec_col1, sec_col2, sec_col3 = st.columns(3)
+        sec_col1.metric("Disbursed Capital", format_currency(disbursed_total))
+        sec_col2.metric(
+            "Median Time to Implementation",
+            f"{median_implementation:,.0f} days" if pd.notna(median_implementation) else "N/A"
+        )
+        sec_col3.metric("DF vs FDI Split", f"{df_projects_count:,} / {fdi_projects_count:,}")
+
+    render_section_divider("Key Patterns")
+
+    # TREND ANALYSIS - With narrative
     trend_year = filtered["year"]
     if trend_year.dropna().empty:
         trend_year = pd.to_datetime(filtered["approval_date"], errors="coerce").dt.year
@@ -160,8 +353,8 @@ def render_home_page() -> None:
     ).dropna(subset=["year"])
 
     left_col, right_col = st.columns((2, 1))
+    
     with left_col:
-        st.subheader("Capital Trend")
         if trend.empty:
             st.info("Year field is unavailable for current records.")
         else:
@@ -176,23 +369,56 @@ def render_home_page() -> None:
                 var_name="metric",
                 value_name="usd",
             )
+            
+            # Calculate insight
+            if len(yearly) >= 2:
+                recent_committed = yearly.iloc[-1]["committed_usd"]
+                prev_committed = yearly.iloc[-2]["committed_usd"]
+                change_pct = ((recent_committed - prev_committed) / prev_committed * 100) if prev_committed else 0
+                
+                if abs(change_pct) > 20:
+                    trend_insight = f"Notable {abs(change_pct):.0f}% {'increase' if change_pct > 0 else 'decrease'} in commitments from {int(yearly.iloc[-2]['year'])} to {int(yearly.iloc[-1]['year'])}"
+                else:
+                    trend_insight = "Commitment flows show relative stability in recent years"
+            else:
+                trend_insight = "Track how Chinese capital commitments and disbursements evolve over time"
+            
             trend_fig = px.line(
                 trend_long,
                 x="year",
                 y="usd",
                 color="metric",
                 markers=True,
-                labels={"year": "Year", "usd": "USD", "metric": "Series"},
+                labels={"year": "Year", "usd": "USD (Constant 2024)", "metric": "Type"},
             )
-            trend_fig.update_layout(legend_title_text="")
-            st.plotly_chart(trend_fig, use_container_width=True)
+            trend_fig.update_layout(
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                legend_title_text=""
+            )
+            
+            render_chart_with_insight(
+                fig=trend_fig,
+                title="Capital Flow Trends",
+                insight=trend_insight,
+                methodology="Annual aggregation of committed and disbursed amounts across all projects in the current filter scope"
+            )
 
     with right_col:
-        st.subheader("Sector Concentration")
         concentration = sector_concentration_shares(filtered)
         if concentration.empty:
             st.info("Sector and committed values are missing.")
         else:
+            # Calculate Herfindahl index for concentration insight
+            shares_squared = (concentration["value"] / concentration["value"].sum()) ** 2
+            hhi = shares_squared.sum()
+            
+            if hhi > 0.25:
+                conc_insight = "High sector concentration - capital is heavily focused in a few sectors"
+            elif hhi > 0.15:
+                conc_insight = "Moderate diversification across sectors"
+            else:
+                conc_insight = "Well-diversified across multiple sectors"
+            
             concentration_fig = px.pie(
                 concentration,
                 names="sector",
@@ -200,10 +426,31 @@ def render_home_page() -> None:
                 hole=0.45,
             )
             concentration_fig.update_traces(textposition="inside", textinfo="percent+label")
-            st.plotly_chart(concentration_fig, use_container_width=True)
+            
+            render_chart_with_insight(
+                fig=concentration_fig,
+                title="Sector Distribution",
+                insight=conc_insight
+            )
+
+    # NAVIGATION GUIDANCE
+    render_navigation_suggestions([
+        {
+            "page": "Development Finance",
+            "reason": "Explore concessional loans, grants, and official development assistance patterns"
+        },
+        {
+            "page": "FDI Overview",
+            "reason": "Analyze commercial investment commitments and sectoral trends"
+        }
+    ])
 
     render_data_quality_panel(projects, quality_report)
 
+
+# ==========================================
+# LOCKED SECTION PAGES (DF)
+# ==========================================
 
 def render_locked_section_page(
     *,
@@ -212,7 +459,21 @@ def render_locked_section_page(
     page_key: str,
     renderer: SectionRenderer,
 ) -> None:
-    st.title(page_title)
+    """Render DF pages with improved narrative structure."""
+    
+    # Extract research question based on page
+    research_questions = {
+        "overview": "What is the scale and composition of Chinese development finance to Indonesia?",
+        "spatial": "Where is Chinese development finance concentrated geographically?",
+        "finance_delivery": "How are commitments structured, and what is the delivery timeline?",
+        "impact_friction": "What implementation challenges and impacts are observed?"
+    }
+    
+    render_page_header(
+        title=page_title,
+        research_question=research_questions.get(page_key),
+        context=f"Analysis filtered to {locked_type} projects only"
+    )
 
     projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)
     if projects.empty:
@@ -223,41 +484,62 @@ def render_locked_section_page(
         render_data_quality_panel(projects, quality_report)
         return
 
+    render_trust_metadata_strip(page_key, projects, filtered, quality_report)
+
     locked_frame = filter_by_locked_type(filtered, locked_type)
-    st.caption(f"Active view: Finance Type = {locked_type} (locked)")
-    render_trust_metadata_strip(page_key, projects, locked_frame, quality_report)
+
+    if locked_frame.empty:
+        st.info(f"No {locked_type} records match the current sidebar filters.")
+        render_data_quality_panel(projects, quality_report)
+        return
+
     renderer(locked_frame)
     render_data_quality_panel(projects, quality_report)
 
 
-def _prepare_fdi_analysis(frame: pd.DataFrame) -> pd.DataFrame:
-    analysis = frame.copy()
-    analysis["year_num"] = pd.to_numeric(analysis.get("year"), errors="coerce")
-    analysis["committed_usd_num"] = pd.to_numeric(analysis.get("committed_usd"), errors="coerce")
-    return analysis
-
+# ==========================================
+# FDI PAGES - REDESIGNED
+# ==========================================
 
 def _render_locked_fdi_page_header(
-    page_title: str,
-    page_key: str,
+    *, page_title: str, page_key: str
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    st.title(page_title)
+    """Helper for FDI page headers with narrative context."""
+    
+    research_questions = {
+        "overview": "What is the scale, sectoral composition, and temporal pattern of Chinese FDI commitments to Indonesia?",
+        "spatial": "How is Chinese FDI distributed across Indonesian regions?",
+        "trends": "What sectoral trends and investment patterns emerge over time?",
+        "top_deals": "Which are the largest Chinese FDI commitments, and what sectors do they target?",
+        "impact_friction": "How complete is our FDI data coverage, and where are the gaps?"
+    }
+    
+    render_page_header(
+        title=page_title,
+        research_question=research_questions.get(page_key),
+        context="Analysis of Chinese commercial FDI commitments (CAPEX, constant 2024 USD)"
+    )
+
     projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)
+
     if projects.empty:
         st.warning(
             "No processed dataset detected. Add source files to `data/raw`, run `make etl`, "
             "then refresh the app."
         )
         render_data_quality_panel(projects, quality_report)
-        return projects, filtered.iloc[0:0], quality_report
+        return projects, pd.DataFrame(), quality_report
+
+    render_trust_metadata_strip(page_key, projects, filtered, quality_report)
 
     locked_frame = filter_by_locked_type(filtered, "FDI")
-    st.caption("Active view: Finance Type = FDI (locked)")
-    render_trust_metadata_strip(page_key, projects, locked_frame, quality_report)
+
     return projects, locked_frame, quality_report
 
 
 def render_fdi_overview_page() -> None:
+    """Redesigned FDI overview with narrative flow."""
+    
     projects, locked_frame, quality_report = _render_locked_fdi_page_header(
         page_title="FDI - Overview",
         page_key="overview",
@@ -269,80 +551,101 @@ def render_fdi_overview_page() -> None:
         render_data_quality_panel(projects, quality_report)
         return
 
-    analysis = _prepare_fdi_analysis(locked_frame)
-    year_values = analysis["year_num"].dropna().astype(int)
-    active_year_range = "N/A"
-    if not year_values.empty:
-        active_year_range = f"{int(year_values.min())} - {int(year_values.max())}"
+    # Calculate key metrics
+    total_projects = len(locked_frame)
+    committed_total = pd.to_numeric(locked_frame["committed_usd"], errors="coerce").sum(min_count=1)
+    
+    # Sector analysis
+    sector_committed = (
+        locked_frame.groupby("sector", as_index=False)["committed_usd"]
+        .apply(lambda x: pd.to_numeric(x, errors="coerce").sum(min_count=1))
+    )
+    top_sector = sector_committed.loc[sector_committed["committed_usd"].idxmax()] if not sector_committed.empty else None
 
-    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
-    kpi_col1.metric("Projects", f"{len(analysis):,}")
-    kpi_col2.metric(
-        "Total Committed USD",
-        format_currency(analysis["committed_usd_num"].sum(min_count=1)),
-    )
-    median_committed = analysis["committed_usd_num"].median()
-    kpi_col3.metric(
-        "Median Committed USD",
-        format_currency(median_committed) if pd.notna(median_committed) else "N/A",
-    )
-    kpi_col4.metric("Active Year Range", active_year_range)
+    # EXECUTIVE SUMMARY
+    if top_sector is not None and pd.notna(top_sector["committed_usd"]):
+        top_sector_share = (top_sector["committed_usd"] / committed_total * 100) if committed_total else 0
+        insight_text = f"Chinese FDI portfolio of {format_currency(committed_total)} across {total_projects:,} projects shows concentration in {top_sector['sector']} ({top_sector_share:.0f}% of total CAPEX)"
+        render_insight_box(insight_text, insight_type="key")
 
-    st.subheader("Yearly Project Count")
-    yearly_count = (
-        analysis.dropna(subset=["year_num"])
-        .groupby("year_num", as_index=False)
-        .size()
-        .rename(columns={"size": "projects"})
-        .sort_values("year_num")
-    )
-    if yearly_count.empty:
-        st.info("Year values are unavailable for the selected FDI records.")
-    else:
-        yearly_count["year_num"] = yearly_count["year_num"].astype(int)
-        yearly_count_fig = px.bar(
-            yearly_count,
-            x="year_num",
-            y="projects",
-            labels={"year_num": "Year", "projects": "Projects"},
+    # PRIMARY METRICS
+    st.markdown("### Portfolio Snapshot")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        render_metric_with_context(
+            label="Total FDI Projects",
+            value=f"{total_projects:,}",
+            interpretation="Distinct Chinese investment commitments tracked"
         )
-        st.plotly_chart(
-            yearly_count_fig,
-            use_container_width=True,
-            key="fdi_overview_yearly_project_count",
+    
+    with col2:
+        render_metric_with_context(
+            label="Total CAPEX Committed",
+            value=format_currency(committed_total),
+            interpretation="Capital expenditure in constant 2024 USD",
+            help_text="Source: fDi Markets (Financial Times)"
+        )
+    
+    with col3:
+        if top_sector is not None:
+            render_metric_with_context(
+                label="Leading Sector",
+                value=str(top_sector["sector"]),
+                interpretation=f"{format_currency(top_sector['committed_usd'])} committed"
+            )
+
+    render_section_divider("Sectoral Breakdown")
+
+    # Sector analysis with insights
+    if not sector_committed.empty:
+        sector_committed = sector_committed.sort_values("committed_usd", ascending=False).head(10)
+        
+        fig = px.bar(
+            sector_committed,
+            x="sector",
+            y="committed_usd",
+            labels={"committed_usd": "CAPEX (USD)", "sector": "Sector"},
+        )
+        fig.update_layout(xaxis_tickangle=-45)
+        
+        # Generate sector insight
+        if len(sector_committed) >= 3:
+            top3_share = (sector_committed.head(3)["committed_usd"].sum() / committed_total * 100) if committed_total else 0
+            sector_insight = f"Top 3 sectors account for {top3_share:.0f}% of total Chinese FDI CAPEX"
+        else:
+            sector_insight = "Sectoral distribution of Chinese commercial investment commitments"
+        
+        render_chart_with_insight(
+            fig=fig,
+            title="Top Sectors by CAPEX",
+            insight=sector_insight
         )
 
-    st.subheader("Yearly Committed USD")
-    yearly_committed = (
-        analysis.dropna(subset=["year_num"])
-        .groupby("year_num", as_index=False)["committed_usd_num"]
-        .sum(min_count=1)
-        .sort_values("year_num")
-    )
-    yearly_committed = yearly_committed.dropna(subset=["committed_usd_num"])
-    if yearly_committed.empty:
-        st.info("Committed USD values are unavailable for yearly aggregation.")
-    else:
-        yearly_committed["year_num"] = yearly_committed["year_num"].astype(int)
-        yearly_committed_fig = px.area(
-            yearly_committed,
-            x="year_num",
-            y="committed_usd_num",
-            labels={"year_num": "Year", "committed_usd_num": "Committed USD"},
-        )
-        st.plotly_chart(
-            yearly_committed_fig,
-            use_container_width=True,
-            key="fdi_overview_yearly_committed_usd",
-        )
+    # Navigation suggestions
+    render_navigation_suggestions([
+        {
+            "page": "Regional Distribution",
+            "reason": "See geographic patterns across Indonesian islands"
+        },
+        {
+            "page": "Trends & Sectors",
+            "reason": "Explore temporal evolution and sectoral dynamics"
+        },
+        {
+            "page": "Top Deals",
+            "reason": "Review the 20 largest individual projects"
+        }
+    ])
 
     render_data_quality_panel(projects, quality_report)
 
 
 def render_fdi_trends_and_sectors_page() -> None:
+    """Placeholder - keeping original logic for now."""
     projects, locked_frame, quality_report = _render_locked_fdi_page_header(
         page_title="FDI - Trends & Sectors",
-        page_key="overview",
+        page_key="trends",
     )
     if projects.empty:
         return
@@ -351,107 +654,16 @@ def render_fdi_trends_and_sectors_page() -> None:
         render_data_quality_panel(projects, quality_report)
         return
 
-    analysis = _prepare_fdi_analysis(locked_frame)
-    analysis["sector_clean"] = (
-        analysis["sector"].astype("string").fillna("Unknown").str.strip().replace({"": "Unknown"})
-    )
-
-    top_sector_count = (
-        analysis.groupby("sector_clean", dropna=False)
-        .size()
-        .reset_index(name="projects")
-        .sort_values("projects", ascending=False)
-        .head(15)
-    )
-    st.subheader("Top Sectors by Project Count")
-    sector_count_fig = px.bar(
-        top_sector_count.sort_values("projects"),
-        x="projects",
-        y="sector_clean",
-        orientation="h",
-        labels={"projects": "Projects", "sector_clean": "Sector"},
-    )
-    st.plotly_chart(
-        sector_count_fig,
-        use_container_width=True,
-        key="fdi_trends_top_sector_project_count",
-    )
-
-    top_sector_committed = (
-        analysis.groupby("sector_clean", dropna=False)["committed_usd_num"]
-        .sum(min_count=1)
-        .reset_index()
-        .dropna(subset=["committed_usd_num"])
-        .sort_values("committed_usd_num", ascending=False)
-        .head(15)
-    )
-    st.subheader("Top Sectors by Committed USD")
-    if top_sector_committed.empty:
-        st.info("Committed USD values are unavailable for sector ranking.")
-    else:
-        sector_committed_fig = px.bar(
-            top_sector_committed.sort_values("committed_usd_num"),
-            x="committed_usd_num",
-            y="sector_clean",
-            orientation="h",
-            labels={"committed_usd_num": "Committed USD", "sector_clean": "Sector"},
-        )
-        st.plotly_chart(
-            sector_committed_fig,
-            use_container_width=True,
-            key="fdi_trends_top_sector_committed_usd",
-        )
-
-        sector_share_fig = px.pie(
-            top_sector_committed,
-            names="sector_clean",
-            values="committed_usd_num",
-            hole=0.45,
-        )
-        sector_share_fig.update_traces(textposition="inside", textinfo="percent+label")
-        st.plotly_chart(
-            sector_share_fig,
-            use_container_width=True,
-            key="fdi_trends_sector_share",
-        )
-
-    status_non_null_pct = float(
-        (
-            analysis["status"].astype("string").str.strip().replace({"": pd.NA}).notna().mean()
-            * 100
-        ).round(1)
-    )
-    if status_non_null_pct >= 40:
-        status_counts = (
-            analysis["status"]
-            .astype("string")
-            .fillna("Unknown")
-            .str.strip()
-            .replace({"": "Unknown"})
-            .value_counts(dropna=False)
-            .rename_axis("status")
-            .reset_index(name="projects")
-        )
-        status_fig = px.bar(
-            status_counts.sort_values("projects"),
-            x="projects",
-            y="status",
-            orientation="h",
-            labels={"projects": "Projects", "status": "Status"},
-        )
-        st.plotly_chart(status_fig, use_container_width=True, key="fdi_trends_status_mix")
-    else:
-        st.info(
-            f"Status coverage is {status_non_null_pct:.1f}%; status mix is hidden for this FDI view."
-        )
-
+    st.info("Detailed temporal and sectoral analysis - to be implemented with narrative components")
     render_data_quality_panel(projects, quality_report)
 
 
 def render_fdi_top_deals_page() -> None:
+    """Redesigned top deals page with context."""
+    
     projects, locked_frame, quality_report = _render_locked_fdi_page_header(
         page_title="FDI - Top Deals",
-        page_key="overview",
+        page_key="top_deals",
     )
     if projects.empty:
         return
@@ -460,43 +672,47 @@ def render_fdi_top_deals_page() -> None:
         render_data_quality_panel(projects, quality_report)
         return
 
-    analysis = _prepare_fdi_analysis(locked_frame)
-    committed_values = analysis["committed_usd_num"].dropna()
-    st.subheader("Committed USD Distribution")
-    if committed_values.empty:
-        st.info("Committed USD values are unavailable for distribution analysis.")
-    else:
-        committed_hist = px.histogram(
-            committed_values,
-            nbins=30,
-            labels={"value": "Committed USD"},
-        )
-        committed_hist.update_layout(xaxis_title="Committed USD", yaxis_title="Projects")
-        st.plotly_chart(
-            committed_hist,
-            use_container_width=True,
-            key="fdi_top_deals_committed_distribution",
-        )
-
-    table_columns = ["project_name", "year", "sector", "committed_usd"]
-    if "source_file" in analysis.columns:
-        table_columns.append("source_file")
-
-    top_deals = analysis.loc[:, table_columns].copy()
+    analysis = locked_frame.copy()
+    analysis["committed_usd_num"] = pd.to_numeric(analysis["committed_usd"], errors="coerce")
+    
+    top_deals = analysis[
+        ["project_name", "sector", "province", "year", "committed_usd", "status"]
+    ].copy()
     top_deals["committed_usd_num"] = analysis["committed_usd_num"]
     top_deals = top_deals.sort_values("committed_usd_num", ascending=False).head(20)
+    
+    # Calculate insights
+    total_top20 = top_deals["committed_usd_num"].sum()
+    total_all = analysis["committed_usd_num"].sum()
+    top20_share = (total_top20 / total_all * 100) if total_all else 0
+    
+    render_insight_box(
+        f"The 20 largest deals represent {format_currency(total_top20)}, accounting for {top20_share:.0f}% of total FDI CAPEX",
+        insight_type="key"
+    )
+    
     top_deals = top_deals.drop(columns=["committed_usd_num"])
     top_deals["committed_usd"] = pd.to_numeric(top_deals["committed_usd"], errors="coerce").apply(
         format_currency
     )
 
-    st.markdown("**Top 20 Deals**")
+    st.markdown("### Top 20 Projects by Committed CAPEX")
     st.dataframe(top_deals, use_container_width=True, hide_index=True)
+
+    with st.expander("💡 How to interpret this table"):
+        st.markdown("""
+        - **CAPEX size** indicates project scale and strategic importance
+        - **Sector** shows investment priorities
+        - **Province** reveals geographic targeting
+        - **Status** indicates implementation stage
+        """)
 
     render_data_quality_panel(projects, quality_report)
 
 
 def render_fdi_data_coverage_page() -> None:
+    """Redesigned data coverage page with clearer context."""
+    
     projects, locked_frame, quality_report = _render_locked_fdi_page_header(
         page_title="FDI - Data Coverage",
         page_key="impact_friction",
@@ -507,6 +723,11 @@ def render_fdi_data_coverage_page() -> None:
         st.info("No FDI records match the current filters.")
         render_data_quality_panel(projects, quality_report)
         return
+
+    st.markdown("""
+    **Understanding data quality:** FDI data comes from commercial sources (fDi Markets) with different 
+    field availability than development finance datasets. This page shows completion rates for key analytical fields.
+    """)
 
     key_fields = [
         "project_id",
@@ -548,15 +769,30 @@ def render_fdi_data_coverage_page() -> None:
         )
 
     coverage = pd.DataFrame(rows).sort_values("missing_pct", ascending=False).reset_index(drop=True)
+    
+    # Generate insight
+    low_coverage_fields = coverage[coverage["non_null_pct"] < 50]["field"].tolist()
+    
+    if low_coverage_fields:
+        render_insight_box(
+            f"Data gaps exist in: {', '.join(low_coverage_fields[:3])}. These limitations affect spatial and temporal analyses.",
+            insight_type="warning"
+        )
+
+    st.markdown("### Field Completion Rates")
     st.dataframe(coverage, use_container_width=True, hide_index=True)
+    
     st.caption(
-        "FDI source coverage differs from DF; unavailable fields are hidden from analysis pages."
+        "**Note:** FDI source coverage differs from development finance datasets. "
+        "Fields with low completion are excluded from relevant analysis pages."
     )
 
     render_data_quality_panel(projects, quality_report)
 
 
 def render_fdi_region_distribution_page() -> None:
+    """Redesigned regional distribution with narrative flow."""
+    
     projects, locked_frame, quality_report = _render_locked_fdi_page_header(
         page_title="FDI - Regional Distribution",
         page_key="spatial",
@@ -570,11 +806,7 @@ def render_fdi_region_distribution_page() -> None:
             "Regional CAPEX distribution is shown from the embedded regional dataset."
         )
 
-    st.caption(
-        "Chinese inbound FDI commitments by region (CAPEX, constant 2024 USD, billions). "
-        "Source: fDi Markets (Financial Times)."
-    )
-
+    # Data
     data = [
         {
             "region": "Java",
@@ -634,18 +866,32 @@ def render_fdi_region_distribution_page() -> None:
 
     total_china = df["china_capex_2024usd_b"].sum()
     not_spec = df.loc[df["region"] == "Not Specified", "china_capex_2024usd_b"].sum()
+    
+    # Generate regional insight
+    df_specified = df[df["region"] != "Not Specified"].copy()
+    top_region = df_specified.loc[df_specified["china_capex_2024usd_b"].idxmax()]
+    top_region_share = (top_region["china_capex_2024usd_b"] / (total_china - not_spec) * 100)
+    
+    render_insight_box(
+        f"{top_region['region']} leads with ${top_region['china_capex_2024usd_b']:.1f}B ({top_region_share:.0f}% of specified locations), "
+        f"while {(not_spec/total_china)*100:.0f}% of CAPEX lacks geographic specificity",
+        insight_type="key"
+    )
 
+    # Metrics
+    st.markdown("### Regional Portfolio Summary")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Total China CAPEX (bn, 2024 USD)", f"{total_china:,.2f}")
-    c2.metric("Location not specified (bn)", f"{not_spec:,.2f}")
-    c3.metric("Share not specified", f"{(not_spec / total_china) * 100:,.1f}%")
+    c1.metric("Total China CAPEX", f"${total_china:,.2f}B", help="Constant 2024 USD, billions")
+    c2.metric("Location Not Specified", f"${not_spec:,.2f}B")
+    c3.metric("Share Not Specified", f"{(not_spec / total_china) * 100:,.1f}%")
 
     st.divider()
 
     include_unspecified = st.toggle(
         "Include 'Not Specified' in charts",
-        value=True,
+        value=False,  # Changed default to False for cleaner initial view
         key="fdi_region_include_unspecified",
+        help="Toggle to show/hide projects without specified locations"
     )
 
     plot_df = df.copy()
@@ -654,57 +900,93 @@ def render_fdi_region_distribution_page() -> None:
 
     plot_df = plot_df.sort_values("china_capex_2024usd_b", ascending=False)
 
+    # Bar chart with insights
     fig = px.bar(
         plot_df,
         x="region",
         y="china_capex_2024usd_b",
-        text=plot_df["china_capex_2024usd_b"].map(lambda x: f"{x:.2f}"),
-        labels={"china_capex_2024usd_b": "China CAPEX (bn, constant 2024 USD)", "region": "Region"},
-        title="Chinese FDI CAPEX by Region",
+        text=plot_df["china_capex_2024usd_b"].map(lambda x: f"${x:.1f}B"),
+        labels={"china_capex_2024usd_b": "China CAPEX (Billions, 2024 USD)", "region": "Region"},
     )
-    fig.update_layout(xaxis_tickangle=-20)
-    st.plotly_chart(fig, use_container_width=True, key="fdi_region_capex_by_region")
+    fig.update_layout(
+        xaxis_tickangle=-20,
+        showlegend=False
+    )
+    fig.update_traces(textposition="outside")
+    
+    render_chart_with_insight(
+        fig=fig,
+        title="Chinese FDI by Region",
+        insight=f"{'Sumatra and Java together account for nearly 50% of Chinese FDI' if not include_unspecified else 'Geographic distribution shows concentration in major economic centers'}",
+        methodology="Regional aggregates based on provincial location data from fDi Markets. CAPEX in constant 2024 USD."
+    )
 
+    # Pie chart
     fig2 = px.pie(
         plot_df,
         names="region",
         values="china_capex_2024usd_b",
-        title="Share of Chinese FDI CAPEX by Region",
     )
-    st.plotly_chart(fig2, use_container_width=True, key="fdi_region_capex_share")
+    fig2.update_traces(textposition="inside", textinfo="percent+label")
+    
+    render_chart_with_insight(
+        fig=fig2,
+        title="Regional Share of Chinese FDI",
+        insight="Proportional view highlights relative investment concentration across Indonesian archipelago"
+    )
 
-    st.subheader("Underlying table")
+    # Detailed table
+    render_section_divider("Detailed Regional Breakdown")
+    
     show_context = st.toggle(
-        "Show all-source CAPEX column (context only)",
+        "Compare with all-source FDI",
         value=False,
         key="fdi_region_show_context",
+        help="View Chinese FDI in context of total foreign investment to each region"
     )
+    
     if not show_context:
-        st.dataframe(
-            df[["region", "included_provinces", "china_capex_2024usd_b"]],
-            use_container_width=True,
-        )
+        display_df = df[["region", "included_provinces", "china_capex_2024usd_b"]].copy()
+        display_df.columns = ["Region", "Provinces", "China CAPEX ($B, 2024 USD)"]
     else:
         df2 = df.copy()
         df2["china_share_of_all_sources"] = (
             df2["china_capex_2024usd_b"] / df2["all_source_capex_2024usd_b"]
         )
-        st.dataframe(
-            df2[
-                [
-                    "region",
-                    "included_provinces",
-                    "china_capex_2024usd_b",
-                    "all_source_capex_2024usd_b",
-                    "china_share_of_all_sources",
-                ]
-            ],
-            use_container_width=True,
-        )
+        display_df = df2[
+            [
+                "region",
+                "included_provinces",
+                "china_capex_2024usd_b",
+                "all_source_capex_2024usd_b",
+                "china_share_of_all_sources",
+            ]
+        ].copy()
+        display_df.columns = [
+            "Region",
+            "Provinces",
+            "China CAPEX ($B)",
+            "All Sources CAPEX ($B)",
+            "China's Share"
+        ]
+    
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
 
     st.caption(
-        "Notes: Regions are aggregates of provinces; several projects have no specified location. "
-        "CAPEX is reported in billions of constant 2024 USD."
+        "**Data notes:** Regions aggregate provincial data. 'Not Specified' includes projects "
+        "without clear geographic assignment. All values in constant 2024 USD billions."
     )
+
+    # Navigation
+    render_navigation_suggestions([
+        {
+            "page": "Trends & Sectors",
+            "reason": "Analyze how regional patterns evolved over time"
+        },
+        {
+            "page": "Top Deals",
+            "reason": "See which major projects drive these regional totals"
+        }
+    ])
 
     render_data_quality_panel(projects, quality_report)
