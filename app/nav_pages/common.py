@@ -197,7 +197,7 @@ def render_page_header(
             (
                 "<div style='background-color: #E3F2FD; padding: 1rem; border-left: "
                 "4px solid #2196F3; border-radius: 6px; margin: 0.8rem 0 0.8rem 0;'>"
-                f"<strong>Research Question:</strong> {research_question}"
+                f"{research_question}"
                 "</div>"
             ),
             unsafe_allow_html=True,
