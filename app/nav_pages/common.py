@@ -1040,42 +1040,39 @@ def render_fdi_overview_page() -> None:
         .sort_values("year_num")
     )
 
-    trend_left, trend_right = st.columns([1, 1])
-    with trend_left:
-        if yearly_count.empty:
-            st.info("Year values are unavailable for FDI project counts.")
-        else:
-            yearly_count["year_num"] = yearly_count["year_num"].astype(int)
-            count_fig = px.bar(
-                yearly_count,
-                x="year_num",
-                y="projects",
-                labels={"year_num": "Year", "projects": "Projects"},
-                color_discrete_sequence=[COLORS["chart_primary"]],
-            )
-            render_chart_with_insight(
-                count_fig,
-                title="Yearly Project Count",
-                insight="Shows when Chinese FDI project entries are most concentrated.",
-            )
+    if yearly_count.empty:
+        st.info("Year values are unavailable for FDI project counts.")
+    else:
+        yearly_count["year_num"] = yearly_count["year_num"].astype(int)
+        count_fig = px.bar(
+            yearly_count,
+            x="year_num",
+            y="projects",
+            labels={"year_num": "Year", "projects": "Projects"},
+            color_discrete_sequence=[COLORS["chart_primary"]],
+        )
+        render_chart_with_insight(
+            count_fig,
+            title="Yearly Project Count",
+            insight="Shows when Chinese FDI project entries are most concentrated.",
+        )
 
-    with trend_right:
-        if yearly_committed.empty:
-            st.info("Committed CAPEX values are unavailable for yearly trend analysis.")
-        else:
-            yearly_committed["year_num"] = yearly_committed["year_num"].astype(int)
-            committed_fig = px.area(
-                yearly_committed,
-                x="year_num",
-                y="committed_usd_num",
-                labels={"year_num": "Year", "committed_usd_num": "Committed USD"},
-                color_discrete_sequence=[COLORS["chart_secondary"]],
-            )
-            render_chart_with_insight(
-                committed_fig,
-                title="Yearly Committed CAPEX",
-                insight="Highlights surges or slowdowns in annual commitment volume.",
-            )
+    if yearly_committed.empty:
+        st.info("Committed CAPEX values are unavailable for yearly trend analysis.")
+    else:
+        yearly_committed["year_num"] = yearly_committed["year_num"].astype(int)
+        committed_fig = px.area(
+            yearly_committed,
+            x="year_num",
+            y="committed_usd_num",
+            labels={"year_num": "Year", "committed_usd_num": "Committed USD"},
+            color_discrete_sequence=[COLORS["chart_secondary"]],
+        )
+        render_chart_with_insight(
+            committed_fig,
+            title="Yearly Committed CAPEX",
+            insight="Highlights surges or slowdowns in annual commitment volume.",
+        )
 
     render_section_divider("Sector Composition")
 
