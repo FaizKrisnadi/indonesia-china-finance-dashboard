@@ -653,17 +653,9 @@ def render_locked_section_page(
         "impact_friction": "How does provincial exposure to Chinese development finance relate to implementation friction?",
     }
 
-    contexts = {
-        "overview": "Portfolio summary view of Development Finance projects only.",
-        "spatial": "Map and geographic exposure analysis for Development Finance projects only.",
-        "finance_delivery": "Lifecycle, cohort, and delay analysis for Development Finance projects only.",
-        "impact_friction": "Risk and exposure benchmarking for Development Finance projects only.",
-    }
-
     render_page_header(
         title=page_title,
         research_question=research_questions.get(page_key),
-        context=contexts.get(page_key),
     )
 
     projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)
@@ -757,7 +749,6 @@ def _render_locked_df_page_header(
     render_page_header(
         title=page_title,
         research_question=research_questions.get(page_key),
-        context="All values shown in this section are filtered to Development Finance (DF).",
     )
 
     projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)
@@ -968,7 +959,6 @@ def _render_locked_fdi_page_header(
     render_page_header(
         title=page_title,
         research_question=research_questions.get(page_key),
-        context="All values shown in this section are filtered to Foreign Direct Investment (FDI).",
     )
 
     projects, filtered, quality_report, _ = _load_page_state(show_finance_type=False)

@@ -305,10 +305,6 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
         return
 
     st.subheader("Chinese-funded Development Projects by Province (2000-2023)")
-    st.caption(
-        "Source: Behavioral Insight report table 'Official PRC Projects by Region' "
-        "(constant 2024 USD)."
-    )
 
     report_frame = _build_df_report_map_frame()
     show_zero_value = st.toggle(
