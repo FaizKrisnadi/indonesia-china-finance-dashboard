@@ -82,7 +82,7 @@ CHART_SEQUENCE = [
     COLORS["chart_quaternary"],
 ]
 
-BASE_FONT = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+BASE_FONT = "'Lato', sans-serif"
 
 FDI_REGION_COORDS = {
     "Sumatra": (-0.5, 101.0),
@@ -102,6 +102,10 @@ def _inject_global_styles() -> None:
     st.markdown(
         """
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700;900&display=swap');
+            html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="stHeader"], [data-testid="stToolbar"], .stMarkdown, .stText, .stMetric, .stCaption, .stAlert, .stButton button, .stDownloadButton button, .stTextInput input, .stSelectbox, .stMultiSelect, .stSlider, .stNumberInput input, .stDateInput input, textarea, input, label, select, option, div[data-baseweb], .js-plotly-plot .plotly text {
+                font-family: 'Lato', sans-serif !important;
+            }
             .stMarkdown h1 {
                 font-size: 2.4rem;
                 font-weight: 700;
@@ -346,6 +350,9 @@ def render_home_page() -> None:
         Built by **[Faiz Krisnadi](https://faizkrisnadi.com)**, this dashboard tracks China-origin
         Development Finance (DF) and Foreign Direct Investment (FDI) inflows into Indonesia, from
         commitment to delivery, with spatial exposure and implementation risk in one view.
+
+        For inquiries, questions, or collaboration opportunities, please reach out at
+        **[faiz.krisnadi@u.nus.edu](mailto:faiz.krisnadi@u.nus.edu)**.
         """
     )
 

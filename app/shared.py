@@ -346,7 +346,7 @@ def _render_copy_shareable_link_control(share_query: str) -> None:
               }}
             }})();
             </script>
-            <div style="font-family: sans-serif; font-size: 0.8rem; color: #475569; margin-bottom: 0.3rem;" id="share-status">
+            <div style="font-family: 'Lato', sans-serif; font-size: 0.8rem; color: #475569; margin-bottom: 0.3rem;" id="share-status">
               Preparing shareable URL...
             </div>
             <input
