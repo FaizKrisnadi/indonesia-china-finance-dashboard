@@ -353,7 +353,18 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
             lataxis_range=[-12, 8],
             lonaxis_range=[94, 142],
         )
-        map_fig.update_layout(margin={"t": 30, "b": 30, "l": 20, "r": 20})
+        map_fig.update_layout(
+            margin={"t": 30, "b": 120, "l": 20, "r": 20},
+            height=560,
+            legend={
+                "orientation": "h",
+                "x": 0.0,
+                "xanchor": "left",
+                "y": -0.12,
+                "yanchor": "top",
+                "title": {"text": "Region"},
+            },
+        )
         st.plotly_chart(map_fig, width="stretch")
 
     region_summary = (
@@ -663,7 +674,11 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
             nbins=30,
             labels={"value": "Days from Approval to Operation"},
         )
-        delay_fig.update_layout(xaxis_title="Days", yaxis_title="Projects")
+        delay_fig.update_layout(
+            xaxis_title="Days",
+            yaxis_title="Projects",
+            showlegend=False,
+        )
         st.plotly_chart(delay_fig, width="stretch")
 
         enriched = add_time_to_implementation_days(add_realization_rate(filtered))

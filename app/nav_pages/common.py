@@ -251,6 +251,98 @@ def _prepare_fdi_analysis(frame: pd.DataFrame) -> pd.DataFrame:
     return analysis
 
 
+def _prepare_sector_share_data(
+    sector_frame: pd.DataFrame,
+    *,
+    top_n: int = 8,
+) -> pd.DataFrame:
+    share_data = sector_frame[["sector_clean", "committed_usd_num"]].dropna(
+        subset=["committed_usd_num"]
+    )
+    share_data = share_data.sort_values("committed_usd_num", ascending=False).reset_index(drop=True)
+
+    if len(share_data) <= top_n:
+        return share_data
+
+    top_rows = share_data.head(top_n).copy()
+    other_value = share_data.iloc[top_n:]["committed_usd_num"].sum(min_count=1)
+    if pd.notna(other_value) and float(other_value) > 0:
+        top_rows = pd.concat(
+            [
+                top_rows,
+                pd.DataFrame(
+                    [{"sector_clean": "Other sectors", "committed_usd_num": float(other_value)}]
+                ),
+            ],
+            ignore_index=True,
+        )
+    return top_rows
+
+
+def _render_sector_share_chart(
+    sector_frame: pd.DataFrame,
+    *,
+    title: str,
+    insight: str,
+) -> None:
+    share_data = _prepare_sector_share_data(sector_frame)
+    if share_data.empty:
+        st.info("Sector-share data is unavailable for the current filters.")
+        return
+
+    share_fig = px.pie(
+        share_data,
+        names="sector_clean",
+        values="committed_usd_num",
+        hole=0.45,
+        color_discrete_sequence=QUALITATIVE_SEQUENCE,
+    )
+    _apply_standard_chart_layout(share_fig)
+    share_fig.update_traces(
+        textposition="inside",
+        textinfo="percent",
+        hovertemplate="%{label}<br>%{percent}<extra></extra>",
+    )
+    share_fig.update_layout(
+        legend={
+            "orientation": "h",
+            "x": 0.0,
+            "xanchor": "left",
+            "y": -0.16,
+            "yanchor": "top",
+            "title": {"text": "Sector"},
+        },
+        margin={"t": 40, "b": 140, "l": 20, "r": 20},
+        height=560,
+    )
+
+    st.subheader(title)
+    st.markdown(f"**What to notice:** {insight}")
+    st.plotly_chart(share_fig, width="stretch")
+
+    total_value = share_data["committed_usd_num"].sum(min_count=1)
+    if pd.isna(total_value) or float(total_value) <= 0:
+        return
+
+    breakdown = share_data.copy()
+    breakdown["share_pct"] = (breakdown["committed_usd_num"] / total_value) * 100
+    breakdown["committed_usd_num"] = breakdown["committed_usd_num"].apply(format_currency)
+    breakdown["share_pct"] = breakdown["share_pct"].map(lambda value: f"{value:.1f}%")
+
+    st.markdown("**Sector Share Breakdown**")
+    st.dataframe(
+        breakdown.rename(
+            columns={
+                "sector_clean": "Sector",
+                "committed_usd_num": "Committed USD",
+                "share_pct": "Share",
+            }
+        ),
+        width="stretch",
+        hide_index=True,
+    )
+
+
 def render_home_page() -> None:
     apply_global_styles()
 
@@ -816,16 +908,8 @@ def render_df_trends_and_sectors_page() -> None:
             )
 
     if not top_sector_committed.empty:
-        share_fig = px.pie(
+        _render_sector_share_chart(
             top_sector_committed,
-            names="sector_clean",
-            values="committed_usd_num",
-            hole=0.45,
-            color_discrete_sequence=QUALITATIVE_SEQUENCE,
-        )
-        share_fig.update_traces(textposition="inside", textinfo="percent+label")
-        render_chart_with_insight(
-            share_fig,
             title="Sector Share of DF Commitments",
             insight="Shows relative concentration across DF sectors.",
         )
@@ -1193,16 +1277,8 @@ def render_fdi_trends_and_sectors_page() -> None:
             )
 
     if not top_sector_committed.empty:
-        share_fig = px.pie(
+        _render_sector_share_chart(
             top_sector_committed,
-            names="sector_clean",
-            values="committed_usd_num",
-            hole=0.45,
-            color_discrete_sequence=QUALITATIVE_SEQUENCE,
-        )
-        share_fig.update_traces(textposition="inside", textinfo="percent+label")
-        render_chart_with_insight(
-            share_fig,
             title="Sector Share of Committed CAPEX",
             insight="Makes concentration and diversification patterns easy to compare.",
         )

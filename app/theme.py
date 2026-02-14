@@ -627,6 +627,10 @@ textarea:focus-visible,
   background: transparent !important;
 }}
 
+.js-plotly-plot .modebar {{
+  display: none !important;
+}}
+
 @media (max-width: 640px) {{
   [data-testid="stAppViewBlockContainer"], .block-container {{
     padding-left: 0.72rem;
