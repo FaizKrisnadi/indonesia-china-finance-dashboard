@@ -333,6 +333,49 @@ html, body, .stApp, [data-testid="stSidebar"], [data-testid="stSidebarNav"], [da
   border-color: var(--border);
 }}
 
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"] {{
+  z-index: 1001;
+}}
+
+[data-testid="collapsedControl"] > button,
+[data-testid="stSidebarCollapsedControl"] > button,
+[data-testid="stSidebarCollapseButton"] > button {{
+  width: 2.55rem !important;
+  height: 2.55rem !important;
+  min-height: 2.55rem !important;
+  min-width: 2.55rem !important;
+  border-radius: 999px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface-1) !important;
+  color: var(--text) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 22px rgba(7, 12, 24, 0.14) !important;
+  opacity: 1 !important;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease !important;
+}}
+
+[data-testid="collapsedControl"] > button:hover,
+[data-testid="stSidebarCollapsedControl"] > button:hover,
+[data-testid="stSidebarCollapseButton"] > button:hover {{
+  border-color: var(--focus) !important;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 28px rgba(7, 12, 24, 0.18) !important;
+}}
+
+[data-testid="collapsedControl"] > button svg,
+[data-testid="stSidebarCollapsedControl"] > button svg,
+[data-testid="stSidebarCollapseButton"] > button svg {{
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  color: var(--text) !important;
+  stroke-width: 2.2 !important;
+}}
+
 [data-testid="stAppViewBlockContainer"], .block-container {{
   max-width: 1120px;
   padding-top: 1.9rem;
@@ -731,6 +774,15 @@ textarea:focus-visible,
     min-height: 2.75rem;
     padding: 0.55rem 0.8rem;
     width: 100%;
+  }}
+
+  [data-testid="collapsedControl"] > button,
+  [data-testid="stSidebarCollapsedControl"] > button,
+  [data-testid="stSidebarCollapseButton"] > button {{
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+    min-width: 2.75rem !important;
   }}
 
   [data-testid="stHorizontalBlock"] {{
