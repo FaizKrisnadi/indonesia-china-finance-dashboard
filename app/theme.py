@@ -334,11 +334,11 @@ html, body, .stApp, [data-testid="stSidebar"], [data-testid="stSidebarNav"], [da
 }}
 
 [data-testid="stAppViewBlockContainer"], .block-container {{
-  max-width: 1200px;
-  padding-top: 1.5rem;
-  padding-bottom: 2rem;
-  padding-left: 1.4rem;
-  padding-right: 1.4rem;
+  max-width: 1120px;
+  padding-top: 1.9rem;
+  padding-bottom: 2.4rem;
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
 }}
 
 .stMarkdown h1 {{
@@ -574,27 +574,35 @@ textarea:focus-visible,
 }}
 
 .theme-nav-cta-reason {{
-  margin: 0.45rem 0.3rem 0.9rem 0.3rem;
+  margin: 0.45rem 0.3rem 1rem 0.3rem;
   color: var(--muted);
   font-size: 0.88rem;
   line-height: 1.35;
-  min-height: 2.7em;
+  min-height: 2.9em;
+}}
+
+.theme-nav-cta-meta {{
+  margin: 0 0.35rem 0.35rem 0.35rem;
+  color: var(--muted);
+  font-size: 0.77rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }}
 
 [data-testid="stPageLink"] {{
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface-1);
-  padding: 0.2rem 0.35rem;
+  padding: 0.32rem 0.46rem;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 10px 22px rgba(6, 12, 22, 0.12);
+    0 14px 30px rgba(6, 12, 22, 0.1);
   transition: border-color 150ms ease, transform 150ms ease;
 }}
 
 [data-testid="stPageLink"]:hover {{
   border-color: var(--focus);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.004);
 }}
 
 [data-testid="stPageLink"] a {{
@@ -603,10 +611,21 @@ textarea:focus-visible,
   font-weight: 640;
   letter-spacing: 0.01em;
   text-decoration: none !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }}
 
 [data-testid="stPageLink"] a p {{
   color: var(--text) !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}}
+
+[data-testid="stPageLink"] > div {{
+  overflow: visible !important;
 }}
 
 .theme-footer-credit {{
@@ -682,10 +701,10 @@ textarea:focus-visible,
 
 @media (max-width: 640px) {{
   [data-testid="stAppViewBlockContainer"], .block-container {{
-    padding-left: 0.72rem;
-    padding-right: 0.72rem;
+    padding-left: 0.92rem;
+    padding-right: 0.92rem;
     padding-top: 1rem;
-    padding-bottom: 1.3rem;
+    padding-bottom: 1.45rem;
   }}
 
   .stMarkdown h1 {{
@@ -727,6 +746,10 @@ textarea:focus-visible,
     min-height: 0;
     margin-top: 0.35rem;
     margin-bottom: 0.75rem;
+  }}
+
+  .theme-nav-cta-meta {{
+    margin-bottom: 0.25rem;
   }}
 
   [data-testid="stDataFrame"] table,

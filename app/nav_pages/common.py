@@ -199,33 +199,46 @@ def render_navigation_suggestions(suggestions: list[dict[str, str]]) -> None:
         return
 
     st.markdown("**Continue exploring:**")
-    cols = st.columns(len(suggestions))
-    for i, suggestion in enumerate(suggestions):
-        page_label = str(suggestion.get("page", "")).strip()
-        reason = str(suggestion.get("reason", "")).strip()
-        target = str(suggestion.get("target", "")).strip() or PAGE_TARGET_BY_LABEL.get(page_label)
+    column_count = 1 if len(suggestions) == 1 else 2
+    for start in range(0, len(suggestions), column_count):
+        cols = st.columns(column_count)
+        row_items = suggestions[start : start + column_count]
 
-        with cols[i]:
-            if target:
-                st.page_link(
-                    target,
-                    label=f"{page_label}  ›",
-                    use_container_width=True,
-                )
-            else:
-                st.markdown(
-                    (
-                        "<div class='theme-nav-card'>"
-                        f"<div class='theme-nav-card__title'>{page_label}</div>"
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
-            if reason:
-                st.markdown(
-                    f"<p class='theme-nav-cta-reason'>{reason}</p>",
-                    unsafe_allow_html=True,
-                )
+        for i, suggestion in enumerate(row_items):
+            page_label = str(suggestion.get("page", "")).strip()
+            reason = str(suggestion.get("reason", "")).strip()
+            target = str(suggestion.get("target", "")).strip() or PAGE_TARGET_BY_LABEL.get(page_label)
+
+            label_parts = [part.strip() for part in page_label.split("/", maxsplit=1)]
+            nav_group = label_parts[0] if len(label_parts) == 2 else ""
+            nav_leaf = label_parts[-1] if label_parts else page_label
+
+            with cols[i]:
+                if nav_group:
+                    st.markdown(
+                        f"<p class='theme-nav-cta-meta'>{nav_group}</p>",
+                        unsafe_allow_html=True,
+                    )
+                if target:
+                    st.page_link(
+                        target,
+                        label=f"{nav_leaf}  ›",
+                        use_container_width=True,
+                    )
+                else:
+                    st.markdown(
+                        (
+                            "<div class='theme-nav-card'>"
+                            f"<div class='theme-nav-card__title'>{nav_leaf}</div>"
+                            "</div>"
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                if reason:
+                    st.markdown(
+                        f"<p class='theme-nav-cta-reason'>{reason}</p>",
+                        unsafe_allow_html=True,
+                    )
 
 
 def render_footer_credit(*, compact: bool = False) -> None:
@@ -312,8 +325,9 @@ def _render_sector_share_chart(
     *,
     title: str,
     insight: str,
+    top_n: int = 8,
 ) -> None:
-    share_data = _prepare_sector_share_data(sector_frame)
+    share_data = _prepare_sector_share_data(sector_frame, top_n=top_n)
     if share_data.empty:
         st.info("Sector-share data is unavailable for the current filters.")
         return
@@ -607,19 +621,14 @@ def render_home_page() -> None:
     if concentration.empty:
         st.info("Sector values are unavailable for this filter selection.")
     else:
-        pie_fig = px.pie(
-            concentration,
-            names="sector",
-            values="value",
-            hole=0.5,
-            color_discrete_sequence=QUALITATIVE_SEQUENCE,
+        home_share = concentration.rename(
+            columns={"sector": "sector_clean", "value": "committed_usd_num"}
         )
-        pie_fig.update_traces(textposition="inside", textinfo="percent")
-
-        render_chart_with_insight(
-            pie_fig,
+        _render_sector_share_chart(
+            home_share,
             title="Sector Concentration",
             insight="Highlights which sectors capture the largest share of portfolio value.",
+            top_n=6,
         )
 
     st.divider()
