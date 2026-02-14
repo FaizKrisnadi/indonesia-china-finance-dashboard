@@ -30,6 +30,7 @@ try:
         THEME_COLORS,
         apply_global_styles,
         apply_standard_chart_layout,
+        get_theme_colors,
     )
 except ModuleNotFoundError:
     from sections import filter_by_locked_type
@@ -51,6 +52,7 @@ except ModuleNotFoundError:
         THEME_COLORS,
         apply_global_styles,
         apply_standard_chart_layout,
+        get_theme_colors,
     )
 
 try:
@@ -1618,7 +1620,7 @@ def render_fdi_region_distribution_page() -> None:
             fitbounds="locations",
             visible=False,
             showcountries=True,
-            countrycolor=COLORS["geo_country_border"],
+            countrycolor=get_theme_colors()["geo_country_border"],
             lataxis_range=[-12, 8],
             lonaxis_range=[94, 142],
         )

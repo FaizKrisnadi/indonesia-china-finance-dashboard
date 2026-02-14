@@ -11,9 +11,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 try:
-    from app.theme import THEME_COLORS, apply_global_styles
+    from app.theme import apply_global_styles, get_theme_colors
 except ModuleNotFoundError:
-    from theme import THEME_COLORS, apply_global_styles
+    from theme import apply_global_styles, get_theme_colors
 
 try:
     from src.model import CANONICAL_FIELDS, coerce_projects_schema, load_data_quality
@@ -321,10 +321,11 @@ def _sync_filters_to_query_params(filters: dict[str, list[Any]], options: dict[s
 
 def _render_copy_shareable_link_control(share_query: str) -> None:
     serialized_query = json.dumps(share_query)
-    status_color = THEME_COLORS["muted"]
-    input_border = THEME_COLORS["border"]
-    input_bg = THEME_COLORS["surface_2"]
-    input_text = THEME_COLORS["text"]
+    theme_colors = get_theme_colors()
+    status_color = theme_colors["muted"]
+    input_border = theme_colors["border"]
+    input_bg = theme_colors["surface_2"]
+    input_text = theme_colors["text"]
     st.sidebar.button("Copy shareable link", key="copy_shareable_link")
     if st.session_state.get("copy_shareable_link", False):
         components.html(

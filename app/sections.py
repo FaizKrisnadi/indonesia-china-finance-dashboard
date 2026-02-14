@@ -10,10 +10,10 @@ import streamlit as st
 
 try:
     from app.shared import format_currency, format_pct, load_projects_cached
-    from app.theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, THEME_COLORS
+    from app.theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, get_theme_colors
 except ModuleNotFoundError:
     from shared import format_currency, format_pct, load_projects_cached
-    from theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, THEME_COLORS
+    from theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, get_theme_colors
 
 try:
     from src.metrics import (
@@ -349,7 +349,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
             fitbounds="locations",
             visible=False,
             showcountries=True,
-            countrycolor=THEME_COLORS["geo_country_border"],
+            countrycolor=get_theme_colors()["geo_country_border"],
             lataxis_range=[-12, 8],
             lonaxis_range=[94, 142],
         )

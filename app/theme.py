@@ -5,20 +5,23 @@ import plotly.io as pio
 import streamlit as st
 
 BASE_FONT = "'Lato', sans-serif"
-PLOTLY_TEMPLATE_NAME = "dashboard_dark"
+PLOTLY_DARK_TEMPLATE_NAME = "dashboard_dark"
+PLOTLY_LIGHT_TEMPLATE_NAME = "dashboard_light"
 
-THEME_COLORS = {
+DARK_THEME_COLORS = {
     "bg": "#0f141d",
     "surface_1": "#161d29",
     "surface_2": "#1c2431",
+    "surface_sticky": "rgba(22, 29, 41, 0.96)",
     "border": "#2d3a4d",
     "text": "#e6edf5",
     "muted": "#a8b4c6",
     "link": "#7eb4ff",
+    "link_hover": "#a4cbff",
     "focus": "#9bc5ff",
     "grid": "rgba(182, 198, 220, 0.22)",
     "axis": "rgba(182, 198, 220, 0.38)",
-    "geo_country_border": "rgba(189, 203, 223, 0.5)",
+    "geo_country_border": "rgba(138, 160, 189, 0.58)",
     "insight_bg": "#1b2636",
     "insight_border": "#5d9eff",
     "warning_bg": "#332416",
@@ -33,81 +36,144 @@ THEME_COLORS = {
     "chart_quaternary": "#d191f0",
     "chart_quinary": "#87d4d8",
     "chart_senary": "#f29cb1",
+    "primary_button_text": "#08111f",
 }
 
+LIGHT_THEME_COLORS = {
+    "bg": "#f7f9fc",
+    "surface_1": "#ffffff",
+    "surface_2": "#f1f5fb",
+    "surface_sticky": "rgba(255, 255, 255, 0.95)",
+    "border": "#d9e2f0",
+    "text": "#1f2a3a",
+    "muted": "#5f6f86",
+    "link": "#1c83e1",
+    "link_hover": "#146cba",
+    "focus": "#3b82f6",
+    "grid": "rgba(49, 67, 94, 0.15)",
+    "axis": "rgba(49, 67, 94, 0.28)",
+    "geo_country_border": "rgba(84, 102, 129, 0.42)",
+    "insight_bg": "#eaf3ff",
+    "insight_border": "#4f8fe6",
+    "warning_bg": "#fff4e8",
+    "warning_border": "#e7a65f",
+    "success_bg": "#e9f8ee",
+    "success_border": "#4caf7f",
+    "neutral_bg": "#f3f6fb",
+    "neutral_border": "#b8c6d9",
+    "chart_primary": "#2e78da",
+    "chart_secondary": "#dc8e3e",
+    "chart_tertiary": "#2ea57a",
+    "chart_quaternary": "#a05acb",
+    "chart_quinary": "#2f9fa6",
+    "chart_senary": "#d05f7f",
+    "primary_button_text": "#ffffff",
+}
+
+# Backward-compatible export used by existing imports.
+THEME_COLORS = DARK_THEME_COLORS
+
 CHART_SEQUENCE = [
-    THEME_COLORS["chart_primary"],
-    THEME_COLORS["chart_secondary"],
-    THEME_COLORS["chart_tertiary"],
-    THEME_COLORS["chart_quaternary"],
+    DARK_THEME_COLORS["chart_primary"],
+    DARK_THEME_COLORS["chart_secondary"],
+    DARK_THEME_COLORS["chart_tertiary"],
+    DARK_THEME_COLORS["chart_quaternary"],
 ]
 
 QUALITATIVE_SEQUENCE = [
-    THEME_COLORS["chart_primary"],
-    THEME_COLORS["chart_secondary"],
-    THEME_COLORS["chart_tertiary"],
-    THEME_COLORS["chart_quaternary"],
-    THEME_COLORS["chart_quinary"],
-    THEME_COLORS["chart_senary"],
+    DARK_THEME_COLORS["chart_primary"],
+    DARK_THEME_COLORS["chart_secondary"],
+    DARK_THEME_COLORS["chart_tertiary"],
+    DARK_THEME_COLORS["chart_quaternary"],
+    DARK_THEME_COLORS["chart_quinary"],
+    DARK_THEME_COLORS["chart_senary"],
 ]
 
 MAP_POINT_RGBA = [97, 167, 255, 185]
 
 
-def _build_plotly_template() -> go.layout.Template:
+def _theme_type() -> str:
+    try:
+        theme_info = st.context.theme
+        raw = str(theme_info.get("type", "")).strip().lower()
+        if raw in {"light", "dark"}:
+            return raw
+    except Exception:  # noqa: BLE001
+        pass
+    return "light"
+
+
+def is_dark_theme() -> bool:
+    return _theme_type() == "dark"
+
+
+def get_theme_colors() -> dict[str, str]:
+    return DARK_THEME_COLORS if is_dark_theme() else LIGHT_THEME_COLORS
+
+
+def _build_plotly_template(theme_colors: dict[str, str]) -> go.layout.Template:
     return go.layout.Template(
         layout={
             "paper_bgcolor": "rgba(0,0,0,0)",
             "plot_bgcolor": "rgba(0,0,0,0)",
-            "font": {"family": BASE_FONT, "size": 12, "color": THEME_COLORS["text"]},
+            "font": {"family": BASE_FONT, "size": 12, "color": theme_colors["text"]},
             "colorway": QUALITATIVE_SEQUENCE,
             "legend": {
                 "bgcolor": "rgba(0,0,0,0)",
-                "font": {"color": THEME_COLORS["text"]},
+                "font": {"color": theme_colors["text"]},
             },
             "xaxis": {
-                "gridcolor": THEME_COLORS["grid"],
-                "linecolor": THEME_COLORS["axis"],
-                "tickcolor": THEME_COLORS["axis"],
+                "gridcolor": theme_colors["grid"],
+                "linecolor": theme_colors["axis"],
+                "tickcolor": theme_colors["axis"],
                 "zeroline": False,
             },
             "yaxis": {
-                "gridcolor": THEME_COLORS["grid"],
-                "linecolor": THEME_COLORS["axis"],
-                "tickcolor": THEME_COLORS["axis"],
+                "gridcolor": theme_colors["grid"],
+                "linecolor": theme_colors["axis"],
+                "tickcolor": theme_colors["axis"],
                 "zeroline": False,
             },
             "geo": {
                 "bgcolor": "rgba(0,0,0,0)",
-                "landcolor": THEME_COLORS["surface_1"],
-                "subunitcolor": THEME_COLORS["geo_country_border"],
-                "countrycolor": THEME_COLORS["geo_country_border"],
-                "coastlinecolor": THEME_COLORS["geo_country_border"],
+                "landcolor": theme_colors["surface_1"],
+                "subunitcolor": theme_colors["geo_country_border"],
+                "countrycolor": theme_colors["geo_country_border"],
+                "coastlinecolor": theme_colors["geo_country_border"],
                 "showland": True,
                 "showlakes": False,
             },
             "polar": {
                 "bgcolor": "rgba(0,0,0,0)",
                 "radialaxis": {
-                    "gridcolor": THEME_COLORS["grid"],
-                    "linecolor": THEME_COLORS["axis"],
+                    "gridcolor": theme_colors["grid"],
+                    "linecolor": theme_colors["axis"],
                 },
-                "angularaxis": {"gridcolor": THEME_COLORS["grid"]},
+                "angularaxis": {"gridcolor": theme_colors["grid"]},
             },
         }
     )
 
 
-def _ensure_plotly_theme() -> None:
-    if PLOTLY_TEMPLATE_NAME not in pio.templates:
-        pio.templates[PLOTLY_TEMPLATE_NAME] = _build_plotly_template()
-    pio.templates.default = PLOTLY_TEMPLATE_NAME
+def _ensure_plotly_templates() -> None:
+    if PLOTLY_DARK_TEMPLATE_NAME not in pio.templates:
+        pio.templates[PLOTLY_DARK_TEMPLATE_NAME] = _build_plotly_template(DARK_THEME_COLORS)
+    if PLOTLY_LIGHT_TEMPLATE_NAME not in pio.templates:
+        pio.templates[PLOTLY_LIGHT_TEMPLATE_NAME] = _build_plotly_template(LIGHT_THEME_COLORS)
+
+
+def _active_plotly_template_name() -> str:
+    return PLOTLY_DARK_TEMPLATE_NAME if is_dark_theme() else PLOTLY_LIGHT_TEMPLATE_NAME
 
 
 def apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = False) -> None:
-    _ensure_plotly_theme()
+    _ensure_plotly_templates()
+    active_colors = get_theme_colors()
+    template_name = _active_plotly_template_name()
+    pio.templates.default = template_name
+
     fig.update_layout(
-        template=PLOTLY_TEMPLATE_NAME,
+        template=template_name,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin={"t": 40, "b": 40, "l": 40, "r": 40},
@@ -124,24 +190,89 @@ def apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = Fal
             }
         )
 
-    fig.update_xaxes(showgrid=True, gridcolor=THEME_COLORS["grid"], zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor=THEME_COLORS["grid"], zeroline=False)
+    fig.update_xaxes(showgrid=True, gridcolor=active_colors["grid"], zeroline=False)
+    fig.update_yaxes(showgrid=True, gridcolor=active_colors["grid"], zeroline=False)
 
 
 def _build_global_css() -> str:
+    light = LIGHT_THEME_COLORS
+    dark = DARK_THEME_COLORS
     return f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700;900&display=swap');
 
 :root {{
-  --bg: {THEME_COLORS["bg"]};
-  --surface-1: {THEME_COLORS["surface_1"]};
-  --surface-2: {THEME_COLORS["surface_2"]};
-  --border: {THEME_COLORS["border"]};
-  --text: {THEME_COLORS["text"]};
-  --muted: {THEME_COLORS["muted"]};
-  --link: {THEME_COLORS["link"]};
-  --focus: {THEME_COLORS["focus"]};
+  --bg: {light["bg"]};
+  --surface-1: {light["surface_1"]};
+  --surface-2: {light["surface_2"]};
+  --surface-sticky: {light["surface_sticky"]};
+  --border: {light["border"]};
+  --text: {light["text"]};
+  --muted: {light["muted"]};
+  --link: {light["link"]};
+  --link-hover: {light["link_hover"]};
+  --focus: {light["focus"]};
+  --insight-bg: {light["insight_bg"]};
+  --insight-border: {light["insight_border"]};
+  --warning-bg: {light["warning_bg"]};
+  --warning-border: {light["warning_border"]};
+  --success-bg: {light["success_bg"]};
+  --success-border: {light["success_border"]};
+  --neutral-bg: {light["neutral_bg"]};
+  --neutral-border: {light["neutral_border"]};
+  --primary-btn-bg: {light["chart_primary"]};
+  --primary-btn-text: {light["primary_button_text"]};
+}}
+
+@media (prefers-color-scheme: dark) {{
+  :root {{
+    --bg: {dark["bg"]};
+    --surface-1: {dark["surface_1"]};
+    --surface-2: {dark["surface_2"]};
+    --surface-sticky: {dark["surface_sticky"]};
+    --border: {dark["border"]};
+    --text: {dark["text"]};
+    --muted: {dark["muted"]};
+    --link: {dark["link"]};
+    --link-hover: {dark["link_hover"]};
+    --focus: {dark["focus"]};
+    --insight-bg: {dark["insight_bg"]};
+    --insight-border: {dark["insight_border"]};
+    --warning-bg: {dark["warning_bg"]};
+    --warning-border: {dark["warning_border"]};
+    --success-bg: {dark["success_bg"]};
+    --success-border: {dark["success_border"]};
+    --neutral-bg: {dark["neutral_bg"]};
+    --neutral-border: {dark["neutral_border"]};
+    --primary-btn-bg: {dark["chart_primary"]};
+    --primary-btn-text: {dark["primary_button_text"]};
+  }}
+}}
+
+html[data-theme="dark"],
+body[data-theme="dark"],
+.stApp[data-theme="dark"],
+[data-theme="dark"] {{
+  --bg: {dark["bg"]};
+  --surface-1: {dark["surface_1"]};
+  --surface-2: {dark["surface_2"]};
+  --surface-sticky: {dark["surface_sticky"]};
+  --border: {dark["border"]};
+  --text: {dark["text"]};
+  --muted: {dark["muted"]};
+  --link: {dark["link"]};
+  --link-hover: {dark["link_hover"]};
+  --focus: {dark["focus"]};
+  --insight-bg: {dark["insight_bg"]};
+  --insight-border: {dark["insight_border"]};
+  --warning-bg: {dark["warning_bg"]};
+  --warning-border: {dark["warning_border"]};
+  --success-bg: {dark["success_bg"]};
+  --success-border: {dark["success_border"]};
+  --neutral-bg: {dark["neutral_bg"]};
+  --neutral-border: {dark["neutral_border"]};
+  --primary-btn-bg: {dark["chart_primary"]};
+  --primary-btn-text: {dark["primary_button_text"]};
 }}
 
 html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .stApp {{
@@ -214,7 +345,7 @@ a {{
 }}
 
 a:hover {{
-  color: #a4cbff !important;
+  color: var(--link-hover) !important;
 }}
 
 [data-testid="stMetric"], [data-testid="stExpander"], [data-testid="stAlertContainer"] > div, [data-testid="stDataFrame"], [data-testid="stDataEditor"], div[data-baseweb="select"], [data-testid="stHorizontalBlock"] > div [data-testid="stVerticalBlockBorderWrapper"] {{
@@ -298,8 +429,8 @@ a:hover {{
 }}
 
 [data-testid="baseButton-primary"] {{
-  background: {THEME_COLORS["chart_primary"]};
-  color: #08111f;
+  background: var(--primary-btn-bg);
+  color: var(--primary-btn-text);
   border-color: transparent;
 }}
 
@@ -353,8 +484,8 @@ textarea:focus-visible,
 }}
 
 .theme-question-box {{
-  background: {THEME_COLORS["insight_bg"]};
-  border-left: 4px solid {THEME_COLORS["insight_border"]};
+  background: var(--insight-bg);
+  border-left: 4px solid var(--insight-border);
   border: 1px solid var(--border);
   border-left-width: 4px;
   border-radius: 10px;
@@ -373,23 +504,23 @@ textarea:focus-visible,
 }}
 
 .theme-insight-key {{
-  background: {THEME_COLORS["insight_bg"]};
-  border-left-color: {THEME_COLORS["insight_border"]};
+  background: var(--insight-bg);
+  border-left-color: var(--insight-border);
 }}
 
 .theme-insight-warning {{
-  background: {THEME_COLORS["warning_bg"]};
-  border-left-color: {THEME_COLORS["warning_border"]};
+  background: var(--warning-bg);
+  border-left-color: var(--warning-border);
 }}
 
 .theme-insight-positive {{
-  background: {THEME_COLORS["success_bg"]};
-  border-left-color: {THEME_COLORS["success_border"]};
+  background: var(--success-bg);
+  border-left-color: var(--success-border);
 }}
 
 .theme-insight-neutral {{
-  background: {THEME_COLORS["neutral_bg"]};
-  border-left-color: {THEME_COLORS["neutral_border"]};
+  background: var(--neutral-bg);
+  border-left-color: var(--neutral-border);
 }}
 
 .theme-nav-card {{
@@ -453,7 +584,7 @@ textarea:focus-visible,
   position: sticky;
   top: 0.25rem;
   z-index: 999;
-  background: rgba(22, 29, 41, 0.96);
+  background: var(--surface-sticky);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 0.55rem 0.75rem;
@@ -530,10 +661,12 @@ textarea:focus-visible,
 
 
 def apply_global_styles() -> None:
+    _ensure_plotly_templates()
+    pio.templates.default = _active_plotly_template_name()
+
     if st.session_state.get("_dashboard_global_styles_injected", False):
         return
 
-    _ensure_plotly_theme()
     css = _build_global_css()
     if hasattr(st, "html"):
         st.html(css)
