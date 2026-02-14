@@ -573,6 +573,42 @@ textarea:focus-visible,
   margin-top: 0.35rem;
 }}
 
+.theme-nav-cta-reason {{
+  margin: 0.45rem 0.3rem 0.9rem 0.3rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  min-height: 2.7em;
+}}
+
+[data-testid="stPageLink"] {{
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-1);
+  padding: 0.2rem 0.35rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(6, 12, 22, 0.12);
+  transition: border-color 150ms ease, transform 150ms ease;
+}}
+
+[data-testid="stPageLink"]:hover {{
+  border-color: var(--focus);
+  transform: translateY(-1px);
+}}
+
+[data-testid="stPageLink"] a {{
+  font-family: {BASE_FONT};
+  color: var(--text) !important;
+  font-weight: 640;
+  letter-spacing: 0.01em;
+  text-decoration: none !important;
+}}
+
+[data-testid="stPageLink"] a p {{
+  color: var(--text) !important;
+}}
+
 .theme-footer-credit {{
   color: var(--muted);
   font-size: 0.9rem;
@@ -685,6 +721,12 @@ textarea:focus-visible,
   .theme-nav-card,
   .theme-home-card {{
     min-height: auto;
+  }}
+
+  .theme-nav-cta-reason {{
+    min-height: 0;
+    margin-top: 0.35rem;
+    margin-bottom: 0.75rem;
   }}
 
   [data-testid="stDataFrame"] table,

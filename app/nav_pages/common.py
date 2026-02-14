@@ -75,6 +75,17 @@ except ModuleNotFoundError:
 
 SectionRenderer = Callable[[pd.DataFrame], None]
 COLORS = THEME_COLORS
+PAGE_TARGET_BY_LABEL = {
+    "Development Finance / Overview": "nav_pages/df_overview.py",
+    "Development Finance / Spatial Explorer": "nav_pages/df_spatial_explorer.py",
+    "Development Finance / Trends & Sectors": "nav_pages/df_trends_and_sectors.py",
+    "Development Finance / Finance and Delivery": "nav_pages/df_finance_and_delivery.py",
+    "Development Finance / Impact and Friction": "nav_pages/df_impact_and_friction.py",
+    "FDI / Overview": "nav_pages/fdi_overview.py",
+    "FDI / Regional Distribution": "nav_pages/fdi_region_page.py",
+    "FDI / Trends and Sectors": "nav_pages/fdi_spatial_explorer.py",
+    "FDI / Top Deals": "nav_pages/fdi_finance_and_delivery.py",
+}
 
 FDI_REGION_COORDS = {
     "Sumatra": (-0.5, 101.0),
@@ -190,16 +201,31 @@ def render_navigation_suggestions(suggestions: list[dict[str, str]]) -> None:
     st.markdown("**Continue exploring:**")
     cols = st.columns(len(suggestions))
     for i, suggestion in enumerate(suggestions):
+        page_label = str(suggestion.get("page", "")).strip()
+        reason = str(suggestion.get("reason", "")).strip()
+        target = str(suggestion.get("target", "")).strip() or PAGE_TARGET_BY_LABEL.get(page_label)
+
         with cols[i]:
-            st.markdown(
-                (
-                    "<div class='theme-nav-card'>"
-                    f"<div class='theme-nav-card__title'>{suggestion['page']}</div>"
-                    f"<div class='theme-nav-card__body'>{suggestion['reason']}</div>"
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
-            )
+            if target:
+                st.page_link(
+                    target,
+                    label=f"{page_label}  ›",
+                    use_container_width=True,
+                )
+            else:
+                st.markdown(
+                    (
+                        "<div class='theme-nav-card'>"
+                        f"<div class='theme-nav-card__title'>{page_label}</div>"
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+            if reason:
+                st.markdown(
+                    f"<p class='theme-nav-cta-reason'>{reason}</p>",
+                    unsafe_allow_html=True,
+                )
 
 
 def render_footer_credit(*, compact: bool = False) -> None:
@@ -351,12 +377,12 @@ def render_home_page() -> None:
     st.title("Indonesia-China Finance Dashboard")
     st.markdown(
         """
-        Built by **[Faiz Krisnadi](https://faizkrisnadi.com)**, this dashboard tracks China-origin
-        Development Finance (DF) and Foreign Direct Investment (FDI) inflows into Indonesia, from
-        commitment to delivery, with spatial exposure and implementation risk in one view.
+        This dashboard tracks China-origin Development Finance (DF) and Foreign Direct Investment (FDI)
+        inflows into Indonesia, from commitment to delivery, with spatial exposure and implementation risk
+        in one view.
 
         For inquiries, questions, or collaboration opportunities, please reach out at
-        **[faiz.krisnadi@u.nus.edu](mailto:faiz.krisnadi@u.nus.edu)**.
+        **faiz.krisnadi@u.nus.edu**.
         """
     )
 
