@@ -11,6 +11,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 try:
+    from app.theme import THEME_COLORS, apply_global_styles
+except ModuleNotFoundError:
+    from theme import THEME_COLORS, apply_global_styles
+
+try:
     from src.model import CANONICAL_FIELDS, coerce_projects_schema, load_data_quality
 except ModuleNotFoundError:
     repo_root = Path(__file__).resolve().parents[1]
@@ -316,6 +321,10 @@ def _sync_filters_to_query_params(filters: dict[str, list[Any]], options: dict[s
 
 def _render_copy_shareable_link_control(share_query: str) -> None:
     serialized_query = json.dumps(share_query)
+    status_color = THEME_COLORS["muted"]
+    input_border = THEME_COLORS["border"]
+    input_bg = THEME_COLORS["surface_2"]
+    input_text = THEME_COLORS["text"]
     st.sidebar.button("Copy shareable link", key="copy_shareable_link")
     if st.session_state.get("copy_shareable_link", False):
         components.html(
@@ -346,14 +355,14 @@ def _render_copy_shareable_link_control(share_query: str) -> None:
               }}
             }})();
             </script>
-            <div style="font-family: 'Lato', sans-serif; font-size: 0.8rem; color: #475569; margin-bottom: 0.3rem;" id="share-status">
+            <div style="font-family: 'Lato', sans-serif; font-size: 0.8rem; color: {status_color}; margin-bottom: 0.3rem;" id="share-status">
               Preparing shareable URL...
             </div>
             <input
               id="share-url"
               readonly
               onclick="this.select();"
-              style="width: 100%; font-size: 0.78rem; padding: 0.25rem 0.35rem; border: 1px solid #d1d5db; border-radius: 4px;"
+              style="width: 100%; font-size: 0.78rem; padding: 0.25rem 0.35rem; border: 1px solid {input_border}; border-radius: 4px; background: {input_bg}; color: {input_text};"
             />
             """,
             height=72,
@@ -412,18 +421,6 @@ def render_trust_metadata_strip(
     elif page_key == "impact_friction":
         pills.append(f"Status Missing: {_missing_pct(filtered, 'status'):.1f}%")
 
-    st.markdown(
-        """
-        <style>
-        .trust-strip {display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0 .6rem 0;}
-        .trust-pill {
-            border:1px solid #d9e2ec;border-radius:999px;padding:.22rem .65rem;
-            background:#f8fbff;font-size:.82rem;color:#2f3b52;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
     html = '<div class="trust-strip">' + "".join(
         f'<span class="trust-pill">{pill}</span>' for pill in pills
     ) + "</div>"
@@ -471,33 +468,6 @@ def render_current_view_bar(projects: pd.DataFrame) -> None:
                 display = f"{display} +{len(selected) - 2}"
         active_entries.append((field, label, display))
 
-    st.markdown(
-        """
-        <style>
-        .current-view-sticky {
-            position: sticky;
-            top: 0.25rem;
-            z-index: 999;
-            background: rgba(255,255,255,0.98);
-            border: 1px solid #e6e6e6;
-            border-radius: 10px;
-            padding: 0.55rem 0.75rem;
-            margin-bottom: 0.7rem;
-        }
-        .current-view-pill {
-            display: inline-block;
-            border: 1px solid #cfd8dc;
-            border-radius: 999px;
-            padding: 0.2rem 0.55rem;
-            margin-right: 0.3rem;
-            font-size: 0.82rem;
-            background: #f8fbff;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     with st.container():
         st.markdown('<div class="current-view-sticky">', unsafe_allow_html=True)
         st.markdown("**Current View**")
@@ -526,6 +496,8 @@ def render_global_sidebar_filters(
     *,
     show_finance_type: bool = True,
 ) -> dict[str, list[Any]]:
+    apply_global_styles()
+
     options = _build_filter_options(projects)
     _init_filter_state(options)
     _apply_query_param_overrides_once(options, include_finance_type=show_finance_type)
@@ -660,7 +632,7 @@ def render_data_quality_panel(projects: pd.DataFrame, quality_report: dict[str, 
         if warnings:
             warning_frame = pd.DataFrame(warnings)
             st.markdown("**ETL Warnings**")
-            st.dataframe(warning_frame, use_container_width=True, hide_index=True)
+            st.dataframe(warning_frame, width="stretch", hide_index=True)
         else:
             st.success("No ETL warnings were recorded.")
 
@@ -674,4 +646,4 @@ def render_data_quality_panel(projects: pd.DataFrame, quality_report: dict[str, 
                 .reset_index(drop=True)
             )
             st.markdown("**Missingness by Canonical Field (%)**")
-            st.dataframe(missing_frame, use_container_width=True, hide_index=True)
+            st.dataframe(missing_frame, width="stretch", hide_index=True)

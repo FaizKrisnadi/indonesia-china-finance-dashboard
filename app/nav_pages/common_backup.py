@@ -185,7 +185,7 @@ def render_home_page() -> None:
                 labels={"year": "Year", "usd": "USD", "metric": "Series"},
             )
             trend_fig.update_layout(legend_title_text="")
-            st.plotly_chart(trend_fig, use_container_width=True)
+            st.plotly_chart(trend_fig, width="stretch")
 
     with right_col:
         st.subheader("Sector Concentration")
@@ -200,7 +200,7 @@ def render_home_page() -> None:
                 hole=0.45,
             )
             concentration_fig.update_traces(textposition="inside", textinfo="percent+label")
-            st.plotly_chart(concentration_fig, use_container_width=True)
+            st.plotly_chart(concentration_fig, width="stretch")
 
     render_data_quality_panel(projects, quality_report)
 
@@ -308,7 +308,7 @@ def render_fdi_overview_page() -> None:
         )
         st.plotly_chart(
             yearly_count_fig,
-            use_container_width=True,
+            width="stretch",
             key="fdi_overview_yearly_project_count",
         )
 
@@ -332,7 +332,7 @@ def render_fdi_overview_page() -> None:
         )
         st.plotly_chart(
             yearly_committed_fig,
-            use_container_width=True,
+            width="stretch",
             key="fdi_overview_yearly_committed_usd",
         )
 
@@ -373,7 +373,7 @@ def render_fdi_trends_and_sectors_page() -> None:
     )
     st.plotly_chart(
         sector_count_fig,
-        use_container_width=True,
+        width="stretch",
         key="fdi_trends_top_sector_project_count",
     )
 
@@ -398,7 +398,7 @@ def render_fdi_trends_and_sectors_page() -> None:
         )
         st.plotly_chart(
             sector_committed_fig,
-            use_container_width=True,
+            width="stretch",
             key="fdi_trends_top_sector_committed_usd",
         )
 
@@ -411,7 +411,7 @@ def render_fdi_trends_and_sectors_page() -> None:
         sector_share_fig.update_traces(textposition="inside", textinfo="percent+label")
         st.plotly_chart(
             sector_share_fig,
-            use_container_width=True,
+            width="stretch",
             key="fdi_trends_sector_share",
         )
 
@@ -439,7 +439,7 @@ def render_fdi_trends_and_sectors_page() -> None:
             orientation="h",
             labels={"projects": "Projects", "status": "Status"},
         )
-        st.plotly_chart(status_fig, use_container_width=True, key="fdi_trends_status_mix")
+        st.plotly_chart(status_fig, width="stretch", key="fdi_trends_status_mix")
     else:
         st.info(
             f"Status coverage is {status_non_null_pct:.1f}%; status mix is hidden for this FDI view."
@@ -474,7 +474,7 @@ def render_fdi_top_deals_page() -> None:
         committed_hist.update_layout(xaxis_title="Committed USD", yaxis_title="Projects")
         st.plotly_chart(
             committed_hist,
-            use_container_width=True,
+            width="stretch",
             key="fdi_top_deals_committed_distribution",
         )
 
@@ -491,7 +491,7 @@ def render_fdi_top_deals_page() -> None:
     )
 
     st.markdown("**Top 20 Deals**")
-    st.dataframe(top_deals, use_container_width=True, hide_index=True)
+    st.dataframe(top_deals, width="stretch", hide_index=True)
 
     render_data_quality_panel(projects, quality_report)
 
@@ -548,7 +548,7 @@ def render_fdi_data_coverage_page() -> None:
         )
 
     coverage = pd.DataFrame(rows).sort_values("missing_pct", ascending=False).reset_index(drop=True)
-    st.dataframe(coverage, use_container_width=True, hide_index=True)
+    st.dataframe(coverage, width="stretch", hide_index=True)
     st.caption(
         "FDI source coverage differs from DF; unavailable fields are hidden from analysis pages."
     )
@@ -663,7 +663,7 @@ def render_fdi_region_distribution_page() -> None:
         title="Chinese FDI CAPEX by Region",
     )
     fig.update_layout(xaxis_tickangle=-20)
-    st.plotly_chart(fig, use_container_width=True, key="fdi_region_capex_by_region")
+    st.plotly_chart(fig, width="stretch", key="fdi_region_capex_by_region")
 
     fig2 = px.pie(
         plot_df,
@@ -671,7 +671,7 @@ def render_fdi_region_distribution_page() -> None:
         values="china_capex_2024usd_b",
         title="Share of Chinese FDI CAPEX by Region",
     )
-    st.plotly_chart(fig2, use_container_width=True, key="fdi_region_capex_share")
+    st.plotly_chart(fig2, width="stretch", key="fdi_region_capex_share")
 
     st.subheader("Underlying table")
     show_context = st.toggle(
@@ -682,7 +682,7 @@ def render_fdi_region_distribution_page() -> None:
     if not show_context:
         st.dataframe(
             df[["region", "included_provinces", "china_capex_2024usd_b"]],
-            use_container_width=True,
+            width="stretch",
         )
     else:
         df2 = df.copy()
@@ -699,7 +699,7 @@ def render_fdi_region_distribution_page() -> None:
                     "china_share_of_all_sources",
                 ]
             ],
-            use_container_width=True,
+            width="stretch",
         )
 
     st.caption(

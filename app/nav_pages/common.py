@@ -24,6 +24,13 @@ try:
         render_trust_metadata_strip,
         set_filter_values,
     )
+    from app.theme import (
+        CHART_SEQUENCE,
+        QUALITATIVE_SEQUENCE,
+        THEME_COLORS,
+        apply_global_styles,
+        apply_standard_chart_layout,
+    )
 except ModuleNotFoundError:
     from sections import filter_by_locked_type
     from shared import (
@@ -37,6 +44,13 @@ except ModuleNotFoundError:
         render_global_sidebar_filters,
         render_trust_metadata_strip,
         set_filter_values,
+    )
+    from theme import (
+        CHART_SEQUENCE,
+        QUALITATIVE_SEQUENCE,
+        THEME_COLORS,
+        apply_global_styles,
+        apply_standard_chart_layout,
     )
 
 try:
@@ -56,33 +70,7 @@ except ModuleNotFoundError:
     )
 
 SectionRenderer = Callable[[pd.DataFrame], None]
-
-COLORS = {
-    "insight_blue": "#E3F2FD",
-    "insight_border": "#2196F3",
-    "warning_bg": "#FFF3E0",
-    "warning_border": "#FF9800",
-    "success_bg": "#E8F5E9",
-    "success_border": "#4CAF50",
-    "chart_primary": "#2196F3",
-    "chart_secondary": "#FF9800",
-    "chart_tertiary": "#4CAF50",
-    "chart_quaternary": "#9C27B0",
-    "text_dark": "#212121",
-    "text_medium": "#616161",
-    "text_light": "#9E9E9E",
-    "bg_light": "#FAFAFA",
-    "bg_white": "#FFFFFF",
-}
-
-CHART_SEQUENCE = [
-    COLORS["chart_primary"],
-    COLORS["chart_secondary"],
-    COLORS["chart_tertiary"],
-    COLORS["chart_quaternary"],
-]
-
-BASE_FONT = "'Lato', sans-serif"
+COLORS = THEME_COLORS
 
 FDI_REGION_COORDS = {
     "Sumatra": (-0.5, 101.0),
@@ -94,85 +82,8 @@ FDI_REGION_COORDS = {
     "Nusa Tenggara": (-8.7, 117.8),
 }
 
-
-def _inject_global_styles() -> None:
-    if st.session_state.get("_dashboard_common_styles_injected"):
-        return
-
-    st.markdown(
-        """
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700;900&display=swap');
-            html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="stHeader"], [data-testid="stToolbar"], .stMarkdown, .stText, .stMetric, .stCaption, .stAlert, .stButton button, .stDownloadButton button, .stTextInput input, .stSelectbox, .stMultiSelect, .stSlider, .stNumberInput input, .stDateInput input, textarea, input, label, select, option, div[data-baseweb], .js-plotly-plot .plotly text {
-                font-family: 'Lato', sans-serif !important;
-            }
-            .stMarkdown h1 {
-                font-size: 2.4rem;
-                font-weight: 700;
-                color: #212121;
-                margin-bottom: 0.5rem;
-                letter-spacing: -0.02em;
-            }
-            .stMarkdown h2 {
-                font-size: 1.9rem;
-                font-weight: 600;
-                color: #424242;
-                margin-top: 1.75rem;
-                margin-bottom: 0.75rem;
-            }
-            .stMarkdown h3 {
-                font-size: 1.35rem;
-                font-weight: 600;
-                color: #616161;
-                margin-top: 1.2rem;
-                margin-bottom: 0.6rem;
-            }
-            .block-container {
-                padding-top: 2rem;
-                padding-bottom: 2rem;
-                max-width: 1200px;
-            }
-            [data-testid="stMetric"] {
-                background-color: #FAFAFA;
-                border: 1px solid #E0E0E0;
-                border-radius: 10px;
-                padding: 0.85rem;
-            }
-            [data-testid="stMetricLabel"] {
-                color: #616161;
-                font-weight: 500;
-            }
-            [data-testid="stMetricValue"] {
-                color: #212121;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.session_state["_dashboard_common_styles_injected"] = True
-
-
 def _apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = False) -> None:
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font={"family": BASE_FONT, "size": 12, "color": COLORS["text_dark"]},
-        margin={"t": 40, "b": 40, "l": 40, "r": 40},
-    )
-
-    if legend_horizontal:
-        fig.update_layout(
-            legend={
-                "orientation": "h",
-                "yanchor": "bottom",
-                "y": 1.02,
-                "xanchor": "right",
-                "x": 1,
-            }
-        )
-
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.08)", zeroline=False)
+    apply_standard_chart_layout(fig, legend_horizontal=legend_horizontal)
 
 
 def render_page_header(
@@ -187,7 +98,7 @@ def render_page_header(
             section, page = parts
             st.markdown(
                 (
-                    "<small style='color: #616161; font-weight: 500;'>"
+                    "<small class='theme-breadcrumb'>"
                     f"{section} / <strong>{page}</strong>"
                     "</small>"
                 ),
@@ -199,8 +110,7 @@ def render_page_header(
     if research_question:
         st.markdown(
             (
-                "<div style='background-color: #E3F2FD; padding: 1rem; border-left: "
-                "4px solid #2196F3; border-radius: 6px; margin: 0.8rem 0 0.8rem 0;'>"
+                "<div class='theme-question-box'>"
                 f"{research_question}"
                 "</div>"
             ),
@@ -212,18 +122,17 @@ def render_page_header(
 
 
 def render_insight_box(insight: str, insight_type: str = "key") -> None:
-    colors = {
-        "key": (COLORS["insight_blue"], COLORS["insight_border"], "Insight"),
-        "warning": (COLORS["warning_bg"], COLORS["warning_border"], "Watchout"),
-        "positive": (COLORS["success_bg"], COLORS["success_border"], "Signal"),
-        "neutral": ("#F5F5F5", COLORS["text_light"], "Context"),
+    variants = {
+        "key": ("theme-insight-key", "Insight"),
+        "warning": ("theme-insight-warning", "Watchout"),
+        "positive": ("theme-insight-positive", "Signal"),
+        "neutral": ("theme-insight-neutral", "Context"),
     }
-    bg_color, border_color, label = colors.get(insight_type, colors["neutral"])
+    css_class, label = variants.get(insight_type, variants["neutral"])
 
     st.markdown(
         (
-            f"<div style='background-color: {bg_color}; padding: 1rem; border-left: "
-            f"4px solid {border_color}; border-radius: 6px; margin: 1rem 0;'>"
+            f"<div class='theme-insight-box {css_class}'>"
             f"<strong>{label}:</strong> {insight}"
             "</div>"
         ),
@@ -257,7 +166,7 @@ def render_chart_with_insight(
     if insight:
         st.markdown(f"**What to notice:** {insight}")
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     if methodology:
         with st.expander("Methodology", expanded=False):
@@ -280,10 +189,9 @@ def render_navigation_suggestions(suggestions: list[dict[str, str]]) -> None:
         with cols[i]:
             st.markdown(
                 (
-                    "<div style='background:#FAFAFA; border:1px solid #E0E0E0; border-radius:10px;"
-                    "padding:0.9rem; min-height:120px;'>"
-                    f"<div style='font-weight:600; color:#212121;'>{suggestion['page']}</div>"
-                    f"<div style='color:#616161; margin-top:0.35rem;'>{suggestion['reason']}</div>"
+                    "<div class='theme-nav-card'>"
+                    f"<div class='theme-nav-card__title'>{suggestion['page']}</div>"
+                    f"<div class='theme-nav-card__body'>{suggestion['reason']}</div>"
                     "</div>"
                 ),
                 unsafe_allow_html=True,
@@ -294,11 +202,11 @@ def render_footer_credit(*, compact: bool = False) -> None:
     padding = "1rem 0" if compact else "2rem 0"
     st.markdown(
         (
-            "<div style='text-align:center; padding:"
-            f"{padding}; color:#616161; font-size:0.9rem;'>"
+            "<div class='theme-footer-credit' style='padding:"
+            f"{padding};'>"
             "Designed and maintained by "
             "<a href='https://faizkrisnadi.com' target='_blank' "
-            "style='color:#2196F3; text-decoration:none; font-weight:600;'>"
+            "style='text-decoration:none; font-weight:600;'>"
             "Faiz Krisnadi"
             "</a>"
             "</div>"
@@ -342,7 +250,7 @@ def _prepare_fdi_analysis(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def render_home_page() -> None:
-    _inject_global_styles()
+    apply_global_styles()
 
     st.title("Indonesia-China Finance Dashboard")
     st.markdown(
@@ -582,7 +490,7 @@ def render_home_page() -> None:
             names="sector",
             values="value",
             hole=0.5,
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=QUALITATIVE_SEQUENCE,
         )
         pie_fig.update_traces(textposition="inside", textinfo="percent")
 
@@ -600,12 +508,12 @@ def render_home_page() -> None:
     with nav_col1:
         st.markdown(
             """
-            <div style='background:#F8FAFD; border:1px solid #DCE8F9; border-radius:12px; padding:1rem;'>
-                <h4 style='margin:0; color:#1f4e79;'>Development Finance</h4>
-                <p style='margin:0.55rem 0 0.2rem 0; color:#455A64;'>
+            <div class='theme-home-card'>
+                <h4>Development Finance</h4>
+                <p>
                     Explore concessional loans, grants, and official development assistance.
                 </p>
-                <p style='margin:0; color:#546E7A;'><strong>See:</strong> spatial patterns, delivery timelines, and implementation risks.</p>
+                <p><strong>See:</strong> spatial patterns, delivery timelines, and implementation risks.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -614,12 +522,12 @@ def render_home_page() -> None:
     with nav_col2:
         st.markdown(
             """
-            <div style='background:#FFF8F3; border:1px solid #F6DFC7; border-radius:12px; padding:1rem;'>
-                <h4 style='margin:0; color:#8c4a0b;'>Foreign Direct Investment</h4>
-                <p style='margin:0.55rem 0 0.2rem 0; color:#5D4037;'>
+            <div class='theme-home-card'>
+                <h4>Foreign Direct Investment</h4>
+                <p>
                     Analyze commercial FDI commitments from Chinese companies.
                 </p>
-                <p style='margin:0; color:#6D4C41;'><strong>See:</strong> regional distribution, top deals, and sector trends.</p>
+                <p><strong>See:</strong> regional distribution, top deals, and sector trends.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -644,7 +552,7 @@ def render_locked_section_page(
     page_key: str,
     renderer: SectionRenderer,
 ) -> None:
-    _inject_global_styles()
+    apply_global_styles()
 
     research_questions = {
         "overview": "What is the scale, performance, and provincial footprint of Chinese development finance in Indonesia?",
@@ -740,7 +648,7 @@ def _render_locked_df_page_header(
     page_title: str,
     page_key: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    _inject_global_styles()
+    apply_global_styles()
 
     research_questions = {
         "trends": "How have Chinese development finance commitments evolved over time, and which sectors are most prominent?",
@@ -911,7 +819,7 @@ def render_df_trends_and_sectors_page() -> None:
             names="sector_clean",
             values="committed_usd_num",
             hole=0.45,
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=QUALITATIVE_SEQUENCE,
         )
         share_fig.update_traces(textposition="inside", textinfo="percent+label")
         render_chart_with_insight(
@@ -946,7 +854,7 @@ def _render_locked_fdi_page_header(
     page_title: str,
     page_key: str,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    _inject_global_styles()
+    apply_global_styles()
 
     research_questions = {
         "overview": "How large is the Chinese FDI portfolio, how has it changed over time, and which sectors dominate?",
@@ -1288,7 +1196,7 @@ def render_fdi_trends_and_sectors_page() -> None:
             names="sector_clean",
             values="committed_usd_num",
             hole=0.45,
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=QUALITATIVE_SEQUENCE,
         )
         share_fig.update_traces(textposition="inside", textinfo="percent+label")
         render_chart_with_insight(
@@ -1411,7 +1319,7 @@ def render_fdi_top_deals_page() -> None:
     )
 
     st.markdown("### Top 20 Projects by Committed CAPEX")
-    st.dataframe(top_deals, use_container_width=True, hide_index=True)
+    st.dataframe(top_deals, width="stretch", hide_index=True)
 
     with st.expander("How to read this table", expanded=False):
         st.markdown(
@@ -1532,7 +1440,7 @@ def render_fdi_data_coverage_page() -> None:
     )
 
     st.markdown("### Underlying Coverage Table")
-    st.dataframe(coverage, use_container_width=True, hide_index=True)
+    st.dataframe(coverage, width="stretch", hide_index=True)
 
     render_navigation_suggestions(
         [
@@ -1710,7 +1618,7 @@ def render_fdi_region_distribution_page() -> None:
             fitbounds="locations",
             visible=False,
             showcountries=True,
-            countrycolor="rgba(0,0,0,0.25)",
+            countrycolor=COLORS["geo_country_border"],
             lataxis_range=[-12, 8],
             lonaxis_range=[94, 142],
         )
@@ -1753,7 +1661,7 @@ def render_fdi_region_distribution_page() -> None:
             "China Share",
         ]
 
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
+    st.dataframe(display_df, width="stretch", hide_index=True)
 
     render_navigation_suggestions(
         [

@@ -10,8 +10,10 @@ import streamlit as st
 
 try:
     from app.shared import format_currency, format_pct, load_projects_cached
+    from app.theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, THEME_COLORS
 except ModuleNotFoundError:
     from shared import format_currency, format_pct, load_projects_cached
+    from theme import MAP_POINT_RGBA, QUALITATIVE_SEQUENCE, THEME_COLORS
 
 try:
     from src.metrics import (
@@ -266,7 +268,7 @@ def render_overview_section(filtered: pd.DataFrame) -> None:
             labels={"year": "Year", "usd": "USD", "metric": "Series"},
         )
         fig.update_layout(legend_title_text="")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     st.subheader("Status Mix")
     status_frame = status_mix(filtered)
@@ -281,7 +283,7 @@ def render_overview_section(filtered: pd.DataFrame) -> None:
             labels={"projects": "Projects", "status": "Status"},
         )
         status_fig.update_layout(yaxis={"categoryorder": "total ascending"})
-        st.plotly_chart(status_fig, use_container_width=True)
+        st.plotly_chart(status_fig, width="stretch")
 
     province_table = (
         filtered.groupby("province", as_index=False)
@@ -296,7 +298,7 @@ def render_overview_section(filtered: pd.DataFrame) -> None:
         st.subheader("Top Provinces by Disbursed Capital")
         province_table["committed_usd"] = province_table["committed_usd"].apply(format_currency)
         province_table["disbursed_usd"] = province_table["disbursed_usd"].apply(format_currency)
-        st.dataframe(province_table.head(10), use_container_width=True, hide_index=True)
+        st.dataframe(province_table.head(10), width="stretch", hide_index=True)
 
 
 def render_spatial_section(filtered: pd.DataFrame) -> None:
@@ -340,19 +342,19 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                 "project_count": "Project count",
                 "per_capita_2024_usd": "Per-capita USD (2024)",
             },
-            color_discrete_sequence=px.colors.qualitative.Set2,
+            color_discrete_sequence=QUALITATIVE_SEQUENCE,
             projection="natural earth",
         )
         map_fig.update_geos(
             fitbounds="locations",
             visible=False,
             showcountries=True,
-            countrycolor="rgba(0,0,0,0.25)",
+            countrycolor=THEME_COLORS["geo_country_border"],
             lataxis_range=[-12, 8],
             lonaxis_range=[94, 142],
         )
         map_fig.update_layout(margin={"t": 30, "b": 30, "l": 20, "r": 20})
-        st.plotly_chart(map_fig, use_container_width=True)
+        st.plotly_chart(map_fig, width="stretch")
 
     region_summary = (
         report_frame.groupby("region", as_index=False)
@@ -386,9 +388,9 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
     )
 
     st.markdown("**Regional Breakdown (Report Table)**")
-    st.dataframe(region_display, use_container_width=True, hide_index=True)
+    st.dataframe(region_display, width="stretch", hide_index=True)
     st.markdown("**Province Breakdown (Report Table)**")
-    st.dataframe(province_display, use_container_width=True, hide_index=True)
+    st.dataframe(province_display, width="stretch", hide_index=True)
 
     st.divider()
 
@@ -439,7 +441,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                 labels={"projects": "Projects", "sector": "Sector"},
             )
             sector_fig.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(sector_fig, use_container_width=True)
+            st.plotly_chart(sector_fig, width="stretch")
 
         with fallback_right:
             status_counts = (
@@ -458,7 +460,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                 labels={"projects": "Projects", "status": "Status"},
             )
             status_fig.update_layout(yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(status_fig, use_container_width=True)
+            st.plotly_chart(status_fig, width="stretch")
 
         top_projects = frame[["project_name", "finance_type", "year", "committed_usd", "status"]].copy()
         top_projects["project_name"] = top_projects["project_name"].fillna("Unnamed Project")
@@ -467,7 +469,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
         top_projects["committed_usd"] = top_projects["committed_usd"].apply(format_currency)
 
         st.markdown("**Top 20 Projects**")
-        st.dataframe(top_projects, use_container_width=True, hide_index=True)
+        st.dataframe(top_projects, width="stretch", hide_index=True)
 
     if coordinate_coverage_pct == 0:
         st.info("No project coordinates available in current sources.")
@@ -488,7 +490,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
         get_position="[longitude, latitude]",
         get_radius=5000,
         radius_min_pixels=3,
-        get_fill_color=[25, 118, 210, 170],
+        get_fill_color=MAP_POINT_RGBA,
         pickable=True,
     )
     deck = pdk.Deck(
@@ -504,7 +506,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
             )
         },
     )
-    st.pydeck_chart(deck, use_container_width=True)
+    st.pydeck_chart(deck, width="stretch")
 
     left_col, right_col = st.columns((1, 1))
     with left_col:
@@ -524,7 +526,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                     "province": "Province",
                 },
             )
-            st.plotly_chart(exposure_fig, use_container_width=True)
+            st.plotly_chart(exposure_fig, width="stretch")
 
         st.subheader("Project Timeline")
         timeline = analysis_frame.dropna(subset=["plotting_date"]).copy()
@@ -545,7 +547,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                 markers=True,
                 labels={"period": "Plotting Date", "projects": "Projects"},
             )
-            st.plotly_chart(timeline_fig, use_container_width=True)
+            st.plotly_chart(timeline_fig, width="stretch")
 
     with right_col:
         st.subheader("Project Drilldown")
@@ -592,7 +594,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
                     ],
                 }
             )
-            st.dataframe(details, use_container_width=True, hide_index=True)
+            st.dataframe(details, width="stretch", hide_index=True)
 
     if coordinate_coverage_pct < 40:
         st.subheader("Fallback Views (Low Coordinate Coverage)")
@@ -613,7 +615,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
         y="stage",
         labels={"projects": "Project Count", "stage": "Lifecycle Stage"},
     )
-    st.plotly_chart(funnel_fig, use_container_width=True)
+    st.plotly_chart(funnel_fig, width="stretch")
 
     st.subheader("Approval Cohorts")
     cohorts = approval_cohorts(filtered)
@@ -628,7 +630,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
                 y="projects",
                 labels={"approval_year": "Approval Year", "projects": "Projects"},
             )
-            st.plotly_chart(projects_fig, use_container_width=True)
+            st.plotly_chart(projects_fig, width="stretch")
 
         with cohort_right:
             realization_fig = px.line(
@@ -641,7 +643,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
                     "avg_realization_rate": "Avg. Realization Rate",
                 },
             )
-            st.plotly_chart(realization_fig, use_container_width=True)
+            st.plotly_chart(realization_fig, width="stretch")
 
         display_cohorts = cohorts.copy()
         display_cohorts["committed_usd"] = display_cohorts["committed_usd"].apply(format_currency)
@@ -649,7 +651,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
         display_cohorts["avg_realization_rate"] = display_cohorts["avg_realization_rate"].apply(
             format_pct
         )
-        st.dataframe(display_cohorts, use_container_width=True, hide_index=True)
+        st.dataframe(display_cohorts, width="stretch", hide_index=True)
 
     st.subheader("Delay Distribution")
     delays = delay_distribution(filtered)
@@ -662,7 +664,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
             labels={"value": "Days from Approval to Operation"},
         )
         delay_fig.update_layout(xaxis_title="Days", yaxis_title="Projects")
-        st.plotly_chart(delay_fig, use_container_width=True)
+        st.plotly_chart(delay_fig, width="stretch")
 
         enriched = add_time_to_implementation_days(add_realization_rate(filtered))
         delayed_projects = enriched[
@@ -676,7 +678,7 @@ def render_finance_and_delivery_section(filtered: pd.DataFrame) -> None:
             "time_to_implementation_days", ascending=False
         ).head(20)
         st.markdown("**Top 20 Longest Implementation Durations**")
-        st.dataframe(delayed_projects, use_container_width=True, hide_index=True)
+        st.dataframe(delayed_projects, width="stretch", hide_index=True)
 
 
 def render_impact_and_friction_section(filtered: pd.DataFrame) -> None:
@@ -722,7 +724,7 @@ def render_impact_and_friction_section(filtered: pd.DataFrame) -> None:
             "exposure_band": "Exposure Band",
         },
     )
-    st.plotly_chart(scatter, use_container_width=True)
+    st.plotly_chart(scatter, width="stretch")
 
     band_summary = (
         comparison.groupby("exposure_band", as_index=False)
@@ -752,7 +754,7 @@ def render_impact_and_friction_section(filtered: pd.DataFrame) -> None:
             barmode="group",
             labels={"value": "Value", "exposure_band": "Exposure Band", "metric": "Metric"},
         )
-        st.plotly_chart(comparison_fig, use_container_width=True)
+        st.plotly_chart(comparison_fig, width="stretch")
 
     with right_col:
         st.subheader("Province Ranking")
@@ -765,13 +767,13 @@ def render_impact_and_friction_section(filtered: pd.DataFrame) -> None:
             labels={"status_risk_index": "Status Risk Index", "province": "Province"},
         )
         ranking_fig.update_layout(yaxis={"categoryorder": "total ascending"})
-        st.plotly_chart(ranking_fig, use_container_width=True)
+        st.plotly_chart(ranking_fig, width="stretch")
 
     band_summary_display = band_summary.copy()
     band_summary_display["avg_realization_rate"] = band_summary_display["avg_realization_rate"].apply(
         format_pct
     )
-    st.dataframe(band_summary_display, use_container_width=True, hide_index=True)
+    st.dataframe(band_summary_display, width="stretch", hide_index=True)
 
 
 def filter_by_locked_type(frame: pd.DataFrame, locked_type: str) -> pd.DataFrame:

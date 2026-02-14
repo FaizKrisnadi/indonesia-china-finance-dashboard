@@ -1,5 +1,17 @@
 import streamlit as st
 
+try:
+    from app.theme import apply_global_styles
+except ModuleNotFoundError:
+    from theme import apply_global_styles
+
+st.set_page_config(
+    page_title="Indonesia-China Finance Dashboard",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+apply_global_styles()
+
 home_page = st.Page("nav_pages/home_page.py", title="Home", default=True)
 
 df_pages = [

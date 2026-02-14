@@ -9,7 +9,8 @@ venv/
 .env.*
 
 # Streamlit local config and credentials
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # Test and tooling caches
 .pytest_cache/
