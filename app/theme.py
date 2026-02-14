@@ -166,18 +166,37 @@ def _active_plotly_template_name() -> str:
     return PLOTLY_DARK_TEMPLATE_NAME if is_dark_theme() else PLOTLY_LIGHT_TEMPLATE_NAME
 
 
+def _activate_plotly_default_template() -> None:
+    template_name = _active_plotly_template_name()
+    try:
+        # On some deploy runtimes, this validation path can trigger early pandas imports.
+        pio.templates.default = template_name
+    except Exception:  # noqa: BLE001
+        # Keep app startup resilient; per-figure layout still applies template styling.
+        return
+
+
 def apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = False) -> None:
     _ensure_plotly_templates()
     active_colors = get_theme_colors()
     template_name = _active_plotly_template_name()
-    pio.templates.default = template_name
+    _activate_plotly_default_template()
 
-    fig.update_layout(
-        template=template_name,
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        margin={"t": 40, "b": 40, "l": 40, "r": 40},
-    )
+    try:
+        fig.update_layout(
+            template=template_name,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            margin={"t": 40, "b": 40, "l": 40, "r": 40},
+        )
+    except Exception:  # noqa: BLE001
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={"family": BASE_FONT, "size": 12, "color": active_colors["text"]},
+            colorway=QUALITATIVE_SEQUENCE,
+            margin={"t": 40, "b": 40, "l": 40, "r": 40},
+        )
 
     if legend_horizontal:
         fig.update_layout(
@@ -662,7 +681,7 @@ textarea:focus-visible,
 
 def apply_global_styles() -> None:
     _ensure_plotly_templates()
-    pio.templates.default = _active_plotly_template_name()
+    _activate_plotly_default_template()
 
     if st.session_state.get("_dashboard_global_styles_injected", False):
         return
