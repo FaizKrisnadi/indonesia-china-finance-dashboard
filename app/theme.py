@@ -90,6 +90,13 @@ QUALITATIVE_SEQUENCE = [
 ]
 
 MAP_POINT_RGBA = [97, 167, 255, 185]
+PLOTLY_CHART_CONFIG = {
+    "displayModeBar": False,
+    "scrollZoom": False,
+    "doubleClick": False,
+    "showAxisDragHandles": False,
+    "showAxisRangeEntryBoxes": False,
+}
 
 
 def _theme_type() -> str:
@@ -109,6 +116,10 @@ def is_dark_theme() -> bool:
 
 def get_theme_colors() -> dict[str, str]:
     return DARK_THEME_COLORS if is_dark_theme() else LIGHT_THEME_COLORS
+
+
+def get_plotly_chart_config() -> dict[str, bool]:
+    return dict(PLOTLY_CHART_CONFIG)
 
 
 def _build_plotly_template(theme_colors: dict[str, str]) -> go.layout.Template:
@@ -187,6 +198,7 @@ def apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = Fal
             template=template_name,
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
+            dragmode=False,
             margin={"t": 40, "b": 40, "l": 40, "r": 40},
         )
     except Exception:  # noqa: BLE001
@@ -195,6 +207,7 @@ def apply_standard_chart_layout(fig: go.Figure, *, legend_horizontal: bool = Fal
             plot_bgcolor="rgba(0,0,0,0)",
             font={"family": BASE_FONT, "size": 12, "color": active_colors["text"]},
             colorway=QUALITATIVE_SEQUENCE,
+            dragmode=False,
             margin={"t": 40, "b": 40, "l": 40, "r": 40},
         )
 

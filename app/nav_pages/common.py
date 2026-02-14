@@ -30,6 +30,7 @@ try:
         THEME_COLORS,
         apply_global_styles,
         apply_standard_chart_layout,
+        get_plotly_chart_config,
         get_theme_colors,
     )
 except ModuleNotFoundError:
@@ -52,6 +53,7 @@ except ModuleNotFoundError:
         THEME_COLORS,
         apply_global_styles,
         apply_standard_chart_layout,
+        get_plotly_chart_config,
         get_theme_colors,
     )
 
@@ -168,7 +170,7 @@ def render_chart_with_insight(
     if insight:
         st.markdown(f"**What to notice:** {insight}")
 
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, width="stretch", config=get_plotly_chart_config())
 
     if methodology:
         with st.expander("Methodology", expanded=False):
@@ -318,7 +320,7 @@ def _render_sector_share_chart(
 
     st.subheader(title)
     st.markdown(f"**What to notice:** {insight}")
-    st.plotly_chart(share_fig, width="stretch")
+    st.plotly_chart(share_fig, width="stretch", config=get_plotly_chart_config())
 
     total_value = share_data["committed_usd_num"].sum(min_count=1)
     if pd.isna(total_value) or float(total_value) <= 0:
