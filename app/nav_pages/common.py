@@ -1314,10 +1314,6 @@ def render_fdi_trends_and_sectors_page() -> None:
             title="Status Mix",
             insight="Useful for tracking pipeline health and execution risk.",
         )
-    else:
-        st.info(
-            f"Status coverage is {status_non_null_pct:.1f}%; status mix is hidden for this view."
-        )
 
     render_navigation_suggestions(
         [

@@ -435,16 +435,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
     analysis_frame["plotting_date"] = approval_date.fillna(year_fallback)
 
     coordinate_mask = analysis_frame["latitude"].notna() & analysis_frame["longitude"].notna()
-    province_mask = (
-        analysis_frame["province"].astype("string").str.strip().replace({"": pd.NA}).notna()
-    )
-
     coordinate_coverage_pct = float(coordinate_mask.mean() * 100)
-    province_coverage_pct = float(province_mask.mean() * 100)
-
-    coverage_col1, coverage_col2 = st.columns(2)
-    coverage_col1.metric("Coordinate Coverage", f"{coordinate_coverage_pct:,.1f}%")
-    coverage_col2.metric("Province Coverage", f"{province_coverage_pct:,.1f}%")
 
     map_frame = analysis_frame.loc[coordinate_mask].copy()
 
@@ -498,8 +489,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
         st.dataframe(top_projects, width="stretch", hide_index=True)
 
     if coordinate_coverage_pct == 0:
-        st.info("No project coordinates available in current sources.")
-        st.subheader("Fallback Views")
+        st.subheader("Portfolio Views")
         _render_fallback_views(analysis_frame)
         return
 
@@ -623,8 +613,7 @@ def render_spatial_section(filtered: pd.DataFrame) -> None:
             st.dataframe(details, width="stretch", hide_index=True)
 
     if coordinate_coverage_pct < 40:
-        st.subheader("Fallback Views (Low Coordinate Coverage)")
-        st.info("Coordinate coverage is below 40%, so non-spatial fallback visuals are shown.")
+        st.subheader("Additional Portfolio Views")
         _render_fallback_views(analysis_frame)
 
 

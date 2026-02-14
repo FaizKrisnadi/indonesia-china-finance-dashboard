@@ -396,26 +396,7 @@ def render_trust_metadata_strip(
     if page_key in {"home", "overview"}:
         pills.append(f"Committed Missing: {_missing_pct(filtered, 'committed_usd'):.1f}%")
     elif page_key == "spatial":
-        if filtered.empty:
-            coordinate_coverage = 0.0
-            province_coverage = 0.0
-        else:
-            lat = pd.to_numeric(filtered["latitude"], errors="coerce")
-            lon = pd.to_numeric(filtered["longitude"], errors="coerce")
-            coordinate_coverage = float(((lat.notna() & lon.notna()).mean() * 100).round(1))
-            province_coverage = float(
-                (
-                    filtered["province"]
-                    .astype("string")
-                    .str.strip()
-                    .replace({"": pd.NA})
-                    .notna()
-                    .mean()
-                    * 100
-                ).round(1)
-            )
-        pills.append(f"Coordinate Coverage: {coordinate_coverage:.1f}%")
-        pills.append(f"Province Coverage: {province_coverage:.1f}%")
+        pass
     elif page_key == "finance_delivery":
         pills.append(f"Approval Date Missing: {_missing_pct(filtered, 'approval_date'):.1f}%")
         pills.append(f"Disbursed Missing: {_missing_pct(filtered, 'disbursed_usd'):.1f}%")
