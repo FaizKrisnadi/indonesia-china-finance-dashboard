@@ -19,9 +19,7 @@ try:
         get_filter_options_from_projects,
         load_data_quality_cached,
         load_projects_cached,
-        render_data_quality_panel,
         render_global_sidebar_filters,
-        render_trust_metadata_strip,
         set_filter_values,
     )
     from app.theme import (
@@ -42,9 +40,7 @@ except ModuleNotFoundError:
         get_filter_options_from_projects,
         load_data_quality_cached,
         load_projects_cached,
-        render_data_quality_panel,
         render_global_sidebar_filters,
-        render_trust_metadata_strip,
         set_filter_values,
     )
     from theme import (
@@ -266,9 +262,7 @@ def _render_metadata_expander(
     *,
     label: str = "🔧 Data Quality & Metadata",
 ) -> None:
-    with st.expander(label, expanded=False):
-        render_trust_metadata_strip(page_key, projects, filtered, quality_report)
-        render_data_quality_panel(projects, quality_report)
+    return
 
 
 def _load_page_state(

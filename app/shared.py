@@ -376,37 +376,7 @@ def render_trust_metadata_strip(
     filtered: pd.DataFrame,
     quality_report: dict[str, Any],
 ) -> None:
-    total_rows = len(projects)
-    shown_rows = len(filtered)
-    generated_at = quality_report.get("generated_at_utc", "N/A")
-    generated_ts = pd.to_datetime(generated_at, errors="coerce", utc=True)
-    generated_label = (
-        generated_ts.strftime("%Y-%m-%d %H:%M UTC") if pd.notna(generated_ts) else str(generated_at)
-    )
-
-    def _missing_pct(frame: pd.DataFrame, column: str) -> float:
-        if frame.empty or column not in frame.columns:
-            return 100.0
-        return float((frame[column].isna().mean() * 100).round(1))
-
-    pills = [
-        f"Rows: {shown_rows:,}/{total_rows:,}",
-        f"Last ETL: {generated_label}",
-    ]
-    if page_key in {"home", "overview"}:
-        pills.append(f"Committed Missing: {_missing_pct(filtered, 'committed_usd'):.1f}%")
-    elif page_key == "spatial":
-        pass
-    elif page_key == "finance_delivery":
-        pills.append(f"Approval Date Missing: {_missing_pct(filtered, 'approval_date'):.1f}%")
-        pills.append(f"Disbursed Missing: {_missing_pct(filtered, 'disbursed_usd'):.1f}%")
-    elif page_key == "impact_friction":
-        pills.append(f"Status Missing: {_missing_pct(filtered, 'status'):.1f}%")
-
-    html = '<div class="trust-strip">' + "".join(
-        f'<span class="trust-pill">{pill}</span>' for pill in pills
-    ) + "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+    return
 
 
 def set_filter_to_all(projects: pd.DataFrame, field: str) -> None:
@@ -509,46 +479,15 @@ def render_global_sidebar_filters(
         options["sector"],
         key="global_filter_sector",
     )
-    provinces = st.sidebar.multiselect(
-        "Province",
-        options["province"],
-        key="global_filter_province",
-    )
     statuses = st.sidebar.multiselect(
         "Status",
         options["status"],
         key="global_filter_status",
     )
-    sponsor_types = st.sidebar.multiselect(
-        "Sponsor Type",
-        options["sponsor_type"],
-        key="global_filter_sponsor_type",
-    )
-
-    finance_series = (
-        projects.get("finance_type", pd.Series(dtype="string")).astype("string").str.upper()
-        if not projects.empty
-        else pd.Series(dtype="string")
-    )
-    df_count = int(finance_series.eq("DF").sum())
-    fdi_count = int(finance_series.eq("FDI").sum())
-    row_count = int(len(projects))
-    source_label = get_loaded_source_label()
-
-    if show_finance_type:
-        if finance_types:
-            selected_types_label = ", ".join(str(item).upper() for item in finance_types)
-        else:
-            selected_types_label = "None"
-    else:
-        selected_types_label = "Locked by top tabs (DF / FDI)"
-
-    with st.sidebar.expander("Dataset Scope", expanded=False):
-        st.caption(
-            f"Data scope: DF + FDI projects in Indonesia | Rows: {row_count:,} | "
-            f"DF: {df_count:,} | FDI: {fdi_count:,} | Loaded source: {source_label}"
-        )
-        st.caption(f"Active view: Finance Type = {selected_types_label}")
+    provinces = list(options["province"])
+    sponsor_types = list(options["sponsor_type"])
+    st.session_state["global_filter_province"] = list(options["province"])
+    st.session_state["global_filter_sponsor_type"] = list(options["sponsor_type"])
 
     filters = {
         "year": years,
@@ -558,8 +497,7 @@ def render_global_sidebar_filters(
         "status": statuses,
         "sponsor_type": sponsor_types,
     }
-    share_query = _sync_filters_to_query_params(filters, options)
-    _render_copy_shareable_link_control(share_query)
+    _sync_filters_to_query_params(filters, options)
 
     return filters
 
@@ -602,30 +540,4 @@ def apply_global_filters(projects: pd.DataFrame, filters: dict[str, list[Any]]) 
 
 
 def render_data_quality_panel(projects: pd.DataFrame, quality_report: dict[str, Any]) -> None:
-    with st.expander("Data Quality", expanded=False):
-        st.caption(
-            "Raw files: "
-            f"{quality_report.get('raw_file_count', 0)} | "
-            f"Rows: {quality_report.get('row_count', len(projects))} | "
-            f"Warnings: {quality_report.get('warning_count', 0)}"
-        )
-
-        warnings = quality_report.get("warnings", [])
-        if warnings:
-            warning_frame = pd.DataFrame(warnings)
-            st.markdown("**ETL Warnings**")
-            st.dataframe(warning_frame, width="stretch", hide_index=True)
-        else:
-            st.success("No ETL warnings were recorded.")
-
-        missing_pct = quality_report.get("missing_pct", {})
-        if missing_pct:
-            missing_frame = (
-                pd.DataFrame(
-                    [{"field": field, "missing_pct": pct} for field, pct in missing_pct.items()]
-                )
-                .sort_values("missing_pct", ascending=False)
-                .reset_index(drop=True)
-            )
-            st.markdown("**Missingness by Canonical Field (%)**")
-            st.dataframe(missing_frame, width="stretch", hide_index=True)
+    return
