@@ -378,15 +378,16 @@ html, body, .stApp, [data-testid="stSidebar"], [data-testid="stSidebarNav"], [da
 
 [data-testid="stAppViewBlockContainer"], .block-container {{
   max-width: 1120px;
-  padding-top: calc(2.85rem + constant(safe-area-inset-top));
-  padding-top: calc(2.85rem + env(safe-area-inset-top, 0px));
+  padding-top: calc(3.15rem + constant(safe-area-inset-top));
+  padding-top: calc(3.15rem + env(safe-area-inset-top, 0px));
   padding-bottom: 2.4rem;
   padding-left: 1.75rem;
   padding-right: 1.75rem;
 }}
 
 [data-testid="stAppViewContainer"] {{
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: 0.75rem;
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
 }}
 
 .stMarkdown h1 {{
@@ -748,11 +749,16 @@ textarea:focus-visible,
 }}
 
 @media (max-width: 640px) {{
+  [data-testid="stAppViewContainer"] {{
+    padding-top: 1rem;
+    padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  }}
+
   [data-testid="stAppViewBlockContainer"], .block-container {{
     padding-left: 0.92rem;
     padding-right: 0.92rem;
-    padding-top: calc(1.75rem + constant(safe-area-inset-top));
-    padding-top: calc(1.75rem + env(safe-area-inset-top, 0px));
+    padding-top: calc(2.35rem + constant(safe-area-inset-top));
+    padding-top: calc(2.35rem + env(safe-area-inset-top, 0px));
     padding-bottom: 1.45rem;
   }}
 
