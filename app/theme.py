@@ -378,10 +378,15 @@ html, body, .stApp, [data-testid="stSidebar"], [data-testid="stSidebarNav"], [da
 
 [data-testid="stAppViewBlockContainer"], .block-container {{
   max-width: 1120px;
-  padding-top: 1.9rem;
+  padding-top: calc(2.85rem + constant(safe-area-inset-top));
+  padding-top: calc(2.85rem + env(safe-area-inset-top, 0px));
   padding-bottom: 2.4rem;
   padding-left: 1.75rem;
   padding-right: 1.75rem;
+}}
+
+[data-testid="stAppViewContainer"] {{
+  padding-top: env(safe-area-inset-top, 0px);
 }}
 
 .stMarkdown h1 {{
@@ -746,7 +751,8 @@ textarea:focus-visible,
   [data-testid="stAppViewBlockContainer"], .block-container {{
     padding-left: 0.92rem;
     padding-right: 0.92rem;
-    padding-top: 1rem;
+    padding-top: calc(1.75rem + constant(safe-area-inset-top));
+    padding-top: calc(1.75rem + env(safe-area-inset-top, 0px));
     padding-bottom: 1.45rem;
   }}
 
