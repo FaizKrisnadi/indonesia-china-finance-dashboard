@@ -2,6 +2,16 @@
 
 Portfolio-grade Streamlit dashboard for Chinese FDI and development finance projects in Indonesia.
 
+[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-investment.faizkrisnadi.com-0A7B83?style=for-the-badge)](https://investment.faizkrisnadi.com/)
+
+Open the deployed app at [investment.faizkrisnadi.com](https://investment.faizkrisnadi.com/).
+
+<p>
+  <a href="https://investment.faizkrisnadi.com/">
+    <img src="docs/assets/dashboard-preview.png" alt="Preview of the Indonesia-China Finance Dashboard" width="900">
+  </a>
+</p>
+
 ## Stack
 - Python 3.11
 - Streamlit (multi-page)
