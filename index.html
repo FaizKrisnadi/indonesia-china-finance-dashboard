@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indonesia-China Finance Dashboard</title>
+  <meta name="description"
+    content="Interactive dashboard tracking $159B of Chinese Development Finance and Foreign Direct Investment in Indonesia.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <div class="scroll-progress" id="scrollProgress"></div>
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+
+  <div class="layout">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand">Indonesia–China<br><span>Finance Dashboard</span></div>
+        <div class="sidebar-subtitle">Investment Tracker</div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Navigate</div>
+        <div class="nav-item active" data-page="home"><span class="nav-icon">◉</span> Home</div>
+        <div class="nav-item" data-page="df"><span class="nav-icon">◉</span> Development Finance</div>
+        <div class="nav-item" data-page="fdi"><span class="nav-icon">◉</span> Foreign Direct Investment</div>
+      </nav>
+      <div class="sidebar-filters" id="sidebarFilters">
+        <h4>Global Filters</h4>
+        <div class="filter-group">
+          <label for="filterType">Finance Type</label>
+          <select id="filterType">
+            <option value="all">All Types</option>
+            <option value="DF">Development Finance</option>
+            <option value="FDI">Foreign Direct Investment</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterSector">Sector</label>
+          <select id="filterSector">
+            <option value="all">All Sectors</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterStatus">Status</label>
+          <select id="filterStatus">
+            <option value="all">All Statuses</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Year Range</label>
+          <div style="display:flex;gap:.3rem;align-items:center;">
+            <select id="filterYearMin" style="flex:1"></select>
+            <span style="color:var(--muted);font-size:.75rem">–</span>
+            <select id="filterYearMax" style="flex:1"></select>
+          </div>
+        </div>
+        <button class="filter-reset-btn" id="filterReset">↻ Reset All Filters</button>
+      </div>
+      <div class="sidebar-footer">© 2026 <a href="https://faizkrisnadi.com">Faiz Krisnadi</a></div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="main" id="mainContent">
+
+      <!-- ══════════ HOME ══════════ -->
+      <div class="page active" id="page-home">
+        <section class="hero">
+          <div class="hero-inner">
+            <h1>Where Is <span class="highlight">$159 Billion</span> of Chinese Capital Going in Indonesia?</h1>
+            <p class="hero-tagline">
+              Tracking 25 years of China-origin development finance and foreign direct investment
+              flowing into Indonesia — from commitment to delivery, mapped across provinces and sectors.
+            </p>
+            <div class="hero-stats" id="heroStats"></div>
+          </div>
+        </section>
+
+        <section class="section-padding">
+          <div class="content-block">
+            <div id="homeNarrative"></div>
+
+            <div class="kpi-grid" id="homeKpis"></div>
+
+            <div class="chart-row">
+              <div class="chart-block">
+                <div class="chart-title">Capital Commitments Over Time</div>
+                <div class="chart-subtitle">Committed value by year, all finance types, USD</div>
+                <div id="homeYearChart" style="height:280px"></div>
+                <div class="chart-source">Source: AidData, China Global Investment Tracker</div>
+              </div>
+              <div class="chart-block">
+                <div class="chart-title">Portfolio by Sector</div>
+                <div class="chart-subtitle">Top 8 sectors by committed capital</div>
+                <div id="homeSectorChart" style="height:280px"></div>
+                <div class="chart-source">Source: AidData, CGIT, BPS</div>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="section-title">Dive Deeper</div>
+            <p class="section-subtitle">Explore each finance stream in detail — from provincial maps to lifecycle
+              analysis.</p>
+            <div class="cta-grid">
+              <div class="cta-card" data-nav="df">
+                <h3>Development Finance →</h3>
+                <p>437 projects · $111B committed · Spatial distribution, sector trends, and delivery analysis of
+                  Chinese official flows.</p>
+              </div>
+              <div class="cta-card" data-nav="fdi">
+                <h3>Foreign Direct Investment →</h3>
+                <p>91 deals · $48B in value · Map FDI hotspots, analyze sector concentration, and explore the largest
+                  deals.</p>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <button class="collapsible-trigger" onclick="toggleCollapsible(this)">
+              <span class="arrow">▶</span> About This Dashboard
+            </button>
+            <div class="collapsible-content">
+              <p>This platform converts fragmented records from AidData, China Global Investment Tracker, and Bank
+                Indonesia
+                into decision-ready monitoring of Chinese capital inflows. It tracks both Development Finance and
+                Foreign Direct Investment.</p>
+              <p style="margin-top:.4rem"><strong>Contact:</strong> <a
+                  href="mailto:hi@faizkrisnadi.com">hi@faizkrisnadi.com</a></p>
+            </div>
+
+            <button class="collapsible-trigger" onclick="toggleCollapsible(this)">
+              <span class="arrow">▶</span> How to Cite
+            </button>
+            <div class="collapsible-content">
+              <p><strong>Krisnadi, Muhammad Faiz. (2026).</strong> <em>Indonesia-China Finance Dashboard.</em>
+                Retrieved from <a href="https://investment.faizkrisnadi.com">investment.faizkrisnadi.com</a></p>
+            </div>
+          </div>
+        </section>
+
+        <footer class="page-footer">© 2026 <a href="https://faizkrisnadi.com">Faiz Krisnadi</a></footer>
+      </div>
+
+      <!-- ══════════ DEVELOPMENT FINANCE ══════════ -->
+      <div class="page" id="page-df">
+        <section class="section-padding">
+          <div class="content-block">
+            <div class="section-title">Development Finance</div>
+            <p class="section-subtitle">Chinese official development finance in Indonesia — loans, grants, and technical
+              assistance tracked from 2000 to 2025.</p>
+
+            <div id="dfActiveFilters" class="active-filters" style="display:none"><span class="label">Filters:</span>
+            </div>
+
+            <div class="kpi-grid" id="dfKpis"></div>
+
+            <div id="dfNarrative"></div>
+
+            <!-- Trend -->
+            <div class="subsection-label">Capital Flow <span class="tag">TREND</span></div>
+            <div class="chart-block">
+              <div class="chart-title">Committed vs Disbursed</div>
+              <div class="chart-subtitle">Annual capital flow comparison, USD</div>
+              <div id="dfTrendChart" style="height:320px"></div>
+              <div class="chart-source" id="dfTrendSource">Source: AidData Global Chinese Development Finance Dataset
+                v3.0</div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Sectors -->
+            <div class="subsection-label">Sector Analysis <span class="tag">BREAKDOWN</span></div>
+            <div class="chart-block">
+              <div class="chart-title">Top Sectors by Value</div>
+              <div class="chart-subtitle">Committed capital, USD</div>
+              <div id="dfSectorBar" style="height:380px"></div>
+            </div>
+            <div class="chart-block">
+              <div class="chart-title">Portfolio Composition</div>
+              <div class="chart-subtitle">Share of total committed capital</div>
+              <div id="dfSectorPie" style="height:380px"></div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Status -->
+            <div class="subsection-label">Project Lifecycle <span class="tag">STATUS</span></div>
+            <div class="chart-row">
+              <div class="chart-block">
+                <div class="chart-title">Status Distribution</div>
+                <div class="chart-subtitle">Number of projects at each lifecycle stage</div>
+                <div id="dfStatusChart" style="height:280px"></div>
+              </div>
+              <div class="chart-block">
+                <div class="chart-title">Annual Project Flow</div>
+                <div class="chart-subtitle">Projects by year, stacked by status</div>
+                <div id="dfStatusYearChart" style="height:280px"></div>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Spatial -->
+            <div class="subsection-label">Geography <span class="tag">SPATIAL</span></div>
+            <div id="dfSpatialNarrative"></div>
+            <div class="map-block">
+              <div class="chart-title">Provincial Distribution</div>
+              <div class="chart-subtitle">Bubble size represents total project value</div>
+              <div id="dfMap" class="map-frame"></div>
+              <div class="chart-source">Source: AidData; province boundaries approximate</div>
+            </div>
+
+            <div class="chart-block">
+              <div class="chart-title">Capital by Region</div>
+              <div class="chart-subtitle">Aggregate value by island group, USD billions</div>
+              <div id="dfRegionBar" style="height:280px"></div>
+            </div>
+
+            <!-- Province table -->
+            <div class="table-block">
+              <div class="table-title">Province-Level Breakdown</div>
+              <div class="table-subtitle">Click column headers to sort</div>
+              <div class="table-scroll">
+                <table class="data-table" id="dfProvinceTable">
+                  <thead>
+                    <tr>
+                      <th data-sort="region">Region</th>
+                      <th data-sort="province_name">Province</th>
+                      <th data-sort="project_count">Projects</th>
+                      <th data-sort="project_value_2024_usd_b">Value (B)</th>
+                      <th data-sort="per_capita_2024_usd">Per Capita</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dfProvinceTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Year × sector -->
+            <div class="subsection-label">Trends by Sector <span class="tag">TIME SERIES</span></div>
+            <div class="chart-block">
+              <div class="chart-title">Sector Trends Over Time</div>
+              <div class="chart-subtitle">Committed capital by top sectors, stacked area, USD</div>
+              <div id="dfSectorTrendChart" style="height:380px"></div>
+              <div class="chart-source">Source: AidData</div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="page-footer">© 2026 <a href="https://faizkrisnadi.com">Faiz Krisnadi</a></footer>
+      </div>
+
+      <!-- ══════════ FDI ══════════ -->
+      <div class="page" id="page-fdi">
+        <section class="section-padding">
+          <div class="content-block">
+            <div class="section-title">Foreign Direct Investment</div>
+            <p class="section-subtitle">Chinese private sector investments in Indonesia — individual deals tracked from
+              the China Global Investment Tracker.</p>
+
+            <div id="fdiActiveFilters" class="active-filters" style="display:none"><span class="label">Filters:</span>
+            </div>
+
+            <div class="kpi-grid" id="fdiKpis"></div>
+
+            <div id="fdiNarrative"></div>
+
+            <!-- Map -->
+            <div class="subsection-label">Investment Map <span class="tag">SPATIAL</span></div>
+            <div class="map-block">
+              <div class="chart-title">FDI Project Locations</div>
+              <div class="chart-subtitle">Each marker represents a tracked investment deal</div>
+              <div id="fdiMap" class="map-frame"></div>
+              <div class="chart-source">Source: China Global Investment Tracker</div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Sector + Year -->
+            <div class="subsection-label">Sector & Timeline <span class="tag">ANALYSIS</span></div>
+            <div class="chart-row">
+              <div class="chart-block">
+                <div class="chart-title">FDI by Sector</div>
+                <div class="chart-subtitle">Committed value, USD</div>
+                <div id="fdiSectorChart" style="height:320px"></div>
+              </div>
+              <div class="chart-block">
+                <div class="chart-title">Annual Deal Flow</div>
+                <div class="chart-subtitle">Deal count and value over time</div>
+                <div id="fdiYearChart" style="height:320px"></div>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Stacked area by sector -->
+            <div class="subsection-label">Sector Trends <span class="tag">TIME SERIES</span></div>
+            <div class="chart-block">
+              <div class="chart-title">FDI Sector Evolution</div>
+              <div class="chart-subtitle">Committed capital by sector over time, stacked area, USD</div>
+              <div id="fdiSectorTrendChart" style="height:360px"></div>
+              <div class="chart-source">Source: CGIT</div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Top deals -->
+            <div class="subsection-label">Largest Deals <span class="tag">RANKING</span></div>
+            <div id="fdiDealsNarrative"></div>
+            <div class="table-block">
+              <div class="table-title">Top FDI Deals</div>
+              <div class="table-subtitle">Ranked by committed value · click headers to sort</div>
+              <div class="table-scroll">
+                <table class="data-table" id="fdiDealsTable">
+                  <thead>
+                    <tr>
+                      <th data-sort="year">Year</th>
+                      <th data-sort="project_name">Project</th>
+                      <th data-sort="sector">Sector</th>
+                      <th data-sort="committed_usd">Value</th>
+                      <th data-sort="status">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fdiDealsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Regional -->
+            <div class="subsection-label">Regional Distribution <span class="tag">GEOGRAPHY</span></div>
+            <div class="chart-block">
+              <div class="chart-title">FDI by Island Group</div>
+              <div class="chart-subtitle">Total value by approximate geographic region, USD</div>
+              <div id="fdiRegionChart" style="height:280px"></div>
+              <div class="chart-source">Source: CGIT; regions derived from coordinates</div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="page-footer">© 2026 <a href="https://faizkrisnadi.com">Faiz Krisnadi</a></footer>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

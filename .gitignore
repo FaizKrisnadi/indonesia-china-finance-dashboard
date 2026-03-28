@@ -27,3 +27,7 @@ htmlcov/
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Local scratch dirs and deploy cache
+.tmp-*/
+.wrangler/
